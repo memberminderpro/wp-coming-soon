@@ -375,37 +375,175 @@
 	}
 
 	/**
-	 * A button showing an image has no use for a style variant, so the control
-	 * goes away rather than sitting there having no effect.
+	 * Reconcile one button row: which fields are shown, which toggles are
+	 * pressed, and what a screen reader would announce.
 	 *
-	 * @param {HTMLElement} row A button row.
+	 * @param {HTMLElement} row A repeater row.
 	 */
 	function syncButtonRow( row ) {
 		if ( ! row ) {
 			return;
 		}
 
-		var image = row.querySelector( '[data-button-image]' );
-		var style = row.querySelector( '[data-button-style]' );
+		var nameField  = row.querySelector( '[data-button-name]' );
+		var labelField = row.querySelector( '[data-button-label]' );
+		var imageField = row.querySelector( '[data-button-image]' );
 
-		if ( image && style ) {
-			style.hidden = '' !== image.value.trim();
+		if ( ! nameField || ! imageField ) {
+			return;
 		}
+
+		var name     = nameField.value.trim();
+		var label    = labelField ? labelField.value.trim() : '';
+		var image    = imageField.value.trim();
+		var hasImage = '' !== image;
+
+		var labelWrap = row.querySelector( '[data-field="label"]' );
+		var imageWrap = row.querySelector( '[data-field="image"]' );
+		var styleWrap = row.querySelector( '[data-field="style"]' );
+		var labelChip = row.querySelector( '[data-toggle-field="label"]' );
+		var imageChip = row.querySelector( '[data-toggle-field="image"]' );
+
+		/*
+		 * An image is the button, so a style variant and separate button text
+		 * have nothing to act on. Their fields are hidden rather than cleared:
+		 * pulling the image back out should give you your text back.
+		 */
+		if ( imageWrap ) {
+			imageWrap.hidden = ! hasImage;
+		}
+
+		if ( styleWrap ) {
+			styleWrap.hidden = hasImage;
+		}
+
+		if ( labelChip ) {
+			labelChip.hidden = hasImage;
+			labelChip.setAttribute( 'aria-pressed', ( ! hasImage && labelWrap && ! labelWrap.hidden ) ? 'true' : 'false' );
+		}
+
+		if ( imageChip ) {
+			imageChip.setAttribute( 'aria-pressed', hasImage ? 'true' : 'false' );
+		}
+
+		if ( labelWrap && hasImage ) {
+			labelWrap.hidden = true;
+		}
+
+		announceButton( row, name, label, hasImage );
 	}
 
 	/**
-	 * Keep every button row's style control in step with its image field.
+	 * Say plainly what the rendered button will be called.
+	 *
+	 * The rule is WCAG 2.5.3: where text is visible, the accessible name has to
+	 * contain it, or someone using voice control cannot activate what they can
+	 * see. The renderer enforces that; this explains it at the moment the
+	 * mismatch is created rather than leaving it to be discovered.
+	 *
+	 * @param {HTMLElement} row      The row.
+	 * @param {string}      name     The name field.
+	 * @param {string}      label    The optional button text.
+	 * @param {boolean}     hasImage Whether an image is set.
+	 */
+	function announceButton( row, name, label, hasImage ) {
+		var out = row.querySelector( '[data-button-announce]' );
+
+		if ( ! out ) {
+			return;
+		}
+
+		out.classList.remove( 'is-warning' );
+
+		if ( ! name ) {
+			out.textContent = '';
+
+			return;
+		}
+
+		if ( hasImage || ! label ) {
+			out.textContent = ( strings.announced || '%s' ).replace( '%s', name );
+
+			return;
+		}
+
+		var contained = name.toLowerCase().indexOf( label.toLowerCase() ) !== -1;
+
+		if ( contained && name.toLowerCase() !== label.toLowerCase() ) {
+			out.textContent = ( strings.announced || '%s' ).replace( '%s', name );
+
+			return;
+		}
+
+		if ( ! contained ) {
+			out.classList.add( 'is-warning' );
+			out.textContent = ( strings.announced || '%s' ).replace( '%s', label ) +
+				' — ' + ( strings.announceClash || '' );
+
+			return;
+		}
+
+		out.textContent = ( strings.announced || '%s' ).replace( '%s', label );
+	}
+
+	/**
+	 * Show or hide one of a row's optional fields.
+	 *
+	 * Turning a field off clears it, because a hidden field that still changed
+	 * the page would be a thing to hunt for. The value is kept on the element
+	 * so turning it straight back on restores what was typed.
+	 *
+	 * @param {HTMLElement} chip The toggle pressed.
+	 */
+	function toggleButtonField( chip ) {
+		var row   = chip.closest( '.mmpcs-row' );
+		var which = chip.dataset.toggleField;
+		var wrap  = row.querySelector( '[data-field="' + which + '"]' );
+
+		if ( ! wrap ) {
+			return;
+		}
+
+		var input = wrap.querySelector( 'input' );
+		var show  = wrap.hidden;
+
+		wrap.hidden = ! show;
+
+		if ( input ) {
+			if ( show ) {
+				input.value = input.dataset.stashed || input.value;
+				input.focus();
+			} else {
+				input.dataset.stashed = input.value;
+				input.value = '';
+			}
+		}
+
+		syncButtonRow( row );
+	}
+
+	/**
+	 * Button rows: the two toggles, and everything they imply.
 	 */
 	function initButtons() {
 		var form = document.querySelector( '.mmpcs-form' ) || document;
 
+		form.addEventListener( 'click', function ( event ) {
+			var chip = event.target.closest( '[data-toggle-field]' );
+
+			if ( chip ) {
+				event.preventDefault();
+				toggleButtonField( chip );
+			}
+		} );
+
 		form.addEventListener( 'input', function ( event ) {
-			if ( event.target.matches( '[data-button-image]' ) ) {
+			if ( event.target.closest( '.mmpcs-row' ) ) {
 				syncButtonRow( event.target.closest( '.mmpcs-row' ) );
 			}
 		} );
 
-		// Picking from the media library sets the value in script, which fires
+		// Choosing from the media library sets a value in script, which fires
 		// no input event of its own.
 		form.addEventListener( 'change', function ( event ) {
 			syncButtonRow( event.target.closest( '.mmpcs-row' ) );

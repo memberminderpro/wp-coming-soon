@@ -93,6 +93,66 @@
 }
 
 /*
+ * The two icon toggles beside a button's name. Real buttons carrying
+ * aria-pressed, not decorative icons, so their state is perceivable without
+ * seeing them -- and large enough to be a comfortable target.
+ */
+.mmpcs-chips {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	padding-bottom: 0.35rem;
+}
+
+.mmpcs-chip {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	padding: 0;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	background: #fff;
+	color: #50575e;
+	cursor: pointer;
+	transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.mmpcs-chip:hover {
+	border-color: #8c8f94;
+	color: #1d2327;
+}
+
+.mmpcs-chip:focus-visible {
+	outline: 2px solid #2271b1;
+	outline-offset: 1px;
+}
+
+/* Pressed is carried by colour and fill, never by colour alone. */
+.mmpcs-chip[aria-pressed="true"] {
+	border-color: #2271b1;
+	background: #2271b1;
+	color: #fff;
+}
+
+.mmpcs-chip[aria-pressed="true"]::after {
+	content: "";
+}
+
+.mmpcs-announce {
+	flex-basis: 100%;
+	margin: 0.25rem 0 0;
+	color: #646970;
+	font-size: 0.75rem;
+}
+
+.mmpcs-announce.is-warning {
+	color: #8a4600;
+	font-weight: 600;
+}
+
+/*
  * A logo row is a <details>, so it must not inherit the flex layout the other
  * repeater rows use -- that would lay the summary and the fields out side by
  * side instead of stacking them.

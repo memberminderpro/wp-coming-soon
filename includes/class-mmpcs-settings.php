@@ -119,24 +119,24 @@ class MMPCS_Settings {
 
 			'buttons_main'    => array(
 				array(
-					'label' => 'Get Your Own WordPress Site',
+					'name'  => 'Get Your Own WordPress Site',
 					'url'   => 'https://www.memberminderpro.com/product/wordpress-hosting/',
 					'style' => 'gold',
 				),
 				array(
-					'label' => 'Book a Strategy Meeting',
+					'name'  => 'Book a Strategy Meeting',
 					'url'   => 'https://calendly.com/d/2nj-psr-b7k/memberminderpro-sales-team-round-robin',
 					'style' => 'ghost',
 				),
 			),
 			'buttons_support' => array(
 				array(
-					'label' => 'Support for DACdb Customers',
+					'name'  => 'Support for DACdb Customers',
 					'url'   => 'https://www.dacdbsupport.com/',
 					'style' => 'navy',
 				),
 				array(
-					'label' => 'Support for iMembersDB Customers',
+					'name'  => 'Support for iMembersDB Customers',
 					'url'   => 'https://www.imemberssupport.com/',
 					'style' => 'crimson',
 				),
@@ -192,6 +192,7 @@ class MMPCS_Settings {
 		}
 
 		$stored = self::migrate_legacy_logos( $stored );
+		$stored = self::migrate_legacy_buttons( $stored );
 
 		$defaults = self::defaults();
 		$merged   = $defaults;
@@ -415,6 +416,7 @@ class MMPCS_Settings {
 	public static function apply_portable( array $payload, $label = '' ) {
 		// An export or preset written before the repeater carries the old keys.
 		$payload = self::migrate_legacy_logos( $payload );
+		$payload = self::migrate_legacy_buttons( $payload );
 
 		$allowed = self::portable_keys();
 		$usable  = array_intersect_key( $payload, array_flip( $allowed ) );
@@ -762,6 +764,40 @@ class MMPCS_Settings {
 		return $stored;
 	}
 
+	/**
+	 * Fold pre-name button rows into the name/label shape.
+	 *
+	 * Up to 1.4.0-beta.5 a row had a required "label" that was both the visible
+	 * text and, once image buttons arrived, the alt text. Splitting those jobs
+	 * renamed the required field to "name" and made "label" the optional
+	 * visible override. An old row's label was its name in everything but
+	 * spelling, so it becomes the name and the label is left empty -- which
+	 * renders the button exactly as it rendered before.
+	 *
+	 * Idempotent, writes nothing, and runs on read and on import.
+	 *
+	 * @param array $stored Stored or imported settings.
+	 * @return array
+	 */
+	public static function migrate_legacy_buttons( array $stored ) {
+		foreach ( array( 'buttons_main', 'buttons_support' ) as $key ) {
+			if ( empty( $stored[ $key ] ) || ! is_array( $stored[ $key ] ) ) {
+				continue;
+			}
+
+			foreach ( $stored[ $key ] as $index => $row ) {
+				if ( ! is_array( $row ) || isset( $row['name'] ) ) {
+					continue;
+				}
+
+				$stored[ $key ][ $index ]['name']  = isset( $row['label'] ) ? $row['label'] : '';
+				$stored[ $key ][ $index ]['label'] = '';
+			}
+		}
+
+		return $stored;
+	}
+
 	private static function sanitize_buttons( $rows ) {
 		$out = array();
 
@@ -774,19 +810,26 @@ class MMPCS_Settings {
 				continue;
 			}
 
+			$name  = isset( $row['name'] ) ? sanitize_text_field( $row['name'] ) : '';
 			$label = isset( $row['label'] ) ? sanitize_text_field( $row['label'] ) : '';
 			$url   = isset( $row['url'] ) ? esc_url_raw( trim( $row['url'] ) ) : '';
 			$style = isset( $row['style'] ) ? sanitize_key( $row['style'] ) : 'ghost';
 			$image = isset( $row['image'] ) ? esc_url_raw( trim( $row['image'] ) ) : '';
 
 			/*
-			 * Drop empty rows entirely so the page never emits a bare anchor.
-			 * The label stays required even for an image button, because there
-			 * it becomes the alt text -- and a linked image with no alt text is
-			 * a link with no accessible name at all.
+			 * The name is what the link is called: the visible text when there
+			 * is no separate label, the alt text when there is an image, and
+			 * the accessible name in both cases. A row without one would be a
+			 * link nothing can announce, so it is dropped along with rows that
+			 * have nowhere to go.
 			 */
-			if ( '' === $label || '' === $url ) {
+			if ( '' === $name || '' === $url ) {
 				continue;
+			}
+
+			// A label identical to the name is not a second thing worth storing.
+			if ( 0 === strcasecmp( $label, $name ) ) {
+				$label = '';
 			}
 
 			if ( ! array_key_exists( $style, self::BUTTON_STYLES ) ) {
@@ -794,10 +837,12 @@ class MMPCS_Settings {
 			}
 
 			$out[] = array(
+				'name'  => $name,
+				// Optional visible text. Empty means the name is shown.
 				'label' => $label,
 				'url'   => $url,
 				'style' => $style,
-				// An image replaces the label on the page; the style variant
+				// An image replaces the text on the page; the style variant
 				// stops applying, because the image is the button.
 				'image' => $image,
 			);
