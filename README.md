@@ -26,11 +26,21 @@ original component when it moved between sites configured at `62.5%` and `100%`.
 | --- | --- |
 | Visibility | The on/off switch and the always-public path allowlist |
 | Content | The logo repeater and its placements; badge, heading, description |
-| Buttons | Main and support button repeaters — label, link, style per row |
+| Buttons | Main and support button repeaters — label, link, style, optional image per row |
 | Footer | Company name and link, legal text, legal-link repeater |
 | Background | Aurora on/off, motion, base colour, blob colours, size, blur, speed, intensity |
 | Colors | Accent, accent hover, button text, navy, crimson, off-white |
 | Updates | Version status, update channel, a manual check, and the automatic-update switch |
+
+### Buttons
+
+A button is text by default: the label is what it says, and the style picks its
+chrome. Give a row an image instead and the image becomes the button — the label
+turns into its alt text, and the style control disappears, because a fill and a
+border around a badge that carries its own shape is chrome on top of chrome.
+
+The label stays required either way. On an image button it is the alt text, and
+a linked image with no alt text is a link with no accessible name.
 
 ### Logos
 

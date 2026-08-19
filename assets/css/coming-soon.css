@@ -366,6 +366,30 @@ html {
 	border-color: var(--mmpcs-accent);
 }
 
+/*
+ * An image button carries its own shape, so it gets no fill, border or padding
+ * -- a styled button around a badge is chrome on top of chrome. The height is
+ * capped to the text buttons' so a mixed row still lines up, and the width
+ * follows from the image's own proportions.
+ */
+.coming-soon__button--image {
+	padding: 0;
+	border: 0;
+	background: none;
+}
+
+.coming-soon__button--image:hover {
+	opacity: 0.85;
+}
+
+.coming-soon__button-img {
+	display: block;
+	block-size: auto;
+	max-block-size: 48px;
+	max-inline-size: 100%;
+	inline-size: auto;
+}
+
 /* The support row is quieter than the main row. */
 [data-support-row] .coming-soon__button {
 	font-size: 12.8px;

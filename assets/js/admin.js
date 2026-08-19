@@ -252,6 +252,7 @@
 				}
 
 				syncLogoRow( input.closest( '.mmpcs-row--logo' ) );
+				syncButtonRow( input.closest( '.mmpcs-row' ) );
 			} );
 
 			frame.open();
@@ -371,6 +372,46 @@
 		} );
 
 		block.hidden = ! anyShared;
+	}
+
+	/**
+	 * A button showing an image has no use for a style variant, so the control
+	 * goes away rather than sitting there having no effect.
+	 *
+	 * @param {HTMLElement} row A button row.
+	 */
+	function syncButtonRow( row ) {
+		if ( ! row ) {
+			return;
+		}
+
+		var image = row.querySelector( '[data-button-image]' );
+		var style = row.querySelector( '[data-button-style]' );
+
+		if ( image && style ) {
+			style.hidden = '' !== image.value.trim();
+		}
+	}
+
+	/**
+	 * Keep every button row's style control in step with its image field.
+	 */
+	function initButtons() {
+		var form = document.querySelector( '.mmpcs-form' ) || document;
+
+		form.addEventListener( 'input', function ( event ) {
+			if ( event.target.matches( '[data-button-image]' ) ) {
+				syncButtonRow( event.target.closest( '.mmpcs-row' ) );
+			}
+		} );
+
+		// Picking from the media library sets the value in script, which fires
+		// no input event of its own.
+		form.addEventListener( 'change', function ( event ) {
+			syncButtonRow( event.target.closest( '.mmpcs-row' ) );
+		} );
+
+		document.querySelectorAll( '.mmpcs-row' ).forEach( syncButtonRow );
 	}
 
 	/**
@@ -772,6 +813,7 @@
 		initRepeaters();
 		initMedia();
 		initLogos();
+		initButtons();
 		initPreview();
 	} );
 }( window.jQuery ) );
