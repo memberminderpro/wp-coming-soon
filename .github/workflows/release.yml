@@ -6,9 +6,11 @@ on:
   push:
     branches: [main, develop]
 
+# Deliberately no pull-requests permission. This workflow only tags and
+# publishes a release that a human already reviewed and merged; opening the
+# release pull request is a developer step, not an unattended one.
 permissions:
   contents: write
-  pull-requests: write
 
 concurrency:
   group: release-${{ github.ref_name }}
@@ -16,7 +18,7 @@ concurrency:
 
 jobs:
   release-please:
-    name: Release PR / tag
+    name: Tag the merged release
     runs-on: ubuntu-latest
     outputs:
       released: ${{ steps.rp.outputs.release_created }}
@@ -27,6 +29,10 @@ jobs:
         id: rp
         with:
           target-branch: ${{ github.ref_name }}
+          # Tag and publish only. Opening the release pull request is done by a
+          # developer with bin/release-pr.sh, so GitHub Actions never needs
+          # permission to create pull requests.
+          skip-github-pull-request: true
           # develop carries its own config so that the prerelease settings do
           # not travel to main when develop is merged.
           config-file: ${{ github.ref_name == 'develop' && '.github/release-please-config.develop.json' || 'release-please-config.json' }}
