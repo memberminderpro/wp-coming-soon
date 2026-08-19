@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+jobs:
+  php:
+    name: PHP lint
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # The oldest version the plugin header claims to support, and current.
+        php: ['7.4', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+
+      - name: Syntax check every PHP file
+        run: find . -name '*.php' -not -path './.git/*' -print0 | xargs -0 -n1 php -l
+
+  package:
+    name: Package sanity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the zip
+        run: bin/build-zip.sh "${{ github.workspace }}/mmp-coming-soon.zip"
+
+      - name: The archive must contain exactly one top-level folder, the slug
+        run: |
+          set -euo pipefail
+          ROOTS="$(unzip -Z1 mmp-coming-soon.zip | cut -d/ -f1 | sort -u)"
+          echo "$ROOTS"
+          test "$ROOTS" = "mmp-coming-soon"
+
+      - name: Build tooling must not ship to customer sites
+        run: |
+          set -euo pipefail
+          ! unzip -Z1 mmp-coming-soon.zip | grep -E '(^|/)(bin|\.github|docs)/' 
+          ! unzip -Z1 mmp-coming-soon.zip | grep -E 'release-please|version\.txt'
+
+      - name: The plugin header and the runtime constant must agree
+        run: |
+          set -euo pipefail
+          HEADER="$(grep -m1 -E '^ \* Version:' mmp-coming-soon.php | awk '{print $3}')"
+          CONST="$(grep -m1 -E "define\( 'MMPCS_VERSION'" mmp-coming-soon.php | sed -E "s/.*'([^']+)'.*/\1/")"
+          echo "header=$HEADER const=$CONST"
+          test "$HEADER" = "$CONST"
+
+  title:
+    name: PR title is a conventional commit
+    runs-on: ubuntu-latest
+    steps:
+      # Squash merges use the PR title as the commit message, so a title that
+      # is not a conventional commit means release-please silently skips the
+      # release.
+      - uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            perf
+            refactor
+            docs
+            style
+            test
+            build
+            ci
+            chore
+            revert

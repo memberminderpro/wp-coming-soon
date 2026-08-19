@@ -1,0 +1,375 @@
+/*
+ * MMP Coming Soon — component styles.
+ *
+ * Converted from the Etch component's class-style records and its "Coming Soon
+ * Component" stylesheet. Every length is an absolute px or viewport value, so
+ * the page renders identically regardless of the host site's root font size.
+ * The section spacing clamps reproduce the AutomaticCSS section tokens the
+ * original depended on, without requiring AutomaticCSS.
+ */
+
+/* ---------- reset ---------- */
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	-webkit-text-size-adjust: 100%;
+	text-size-adjust: 100%;
+}
+
+.mmpcs-body {
+	margin: 0;
+	min-block-size: 100vh;
+	min-block-size: 100svh;
+	background-color: var(--mmpcs-page-bg, #010104);
+	color: var(--mmpcs-text-light);
+	font-family: var(--mmpcs-font-body);
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+.mmpcs-body img {
+	max-inline-size: 100%;
+	block-size: auto;
+}
+
+/* ---------- fonts ---------- */
+
+@font-face {
+	font-family: "Syne";
+	font-style: normal;
+	font-weight: 400 800;
+	font-display: swap;
+	src: url("../fonts/syne-latin.woff2") format("woff2");
+	unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+	font-family: "Syne";
+	font-style: normal;
+	font-weight: 400 800;
+	font-display: swap;
+	src: url("../fonts/syne-latin-ext.woff2") format("woff2");
+	unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+	font-family: "Plus Jakarta Sans";
+	font-style: normal;
+	font-weight: 200 800;
+	font-display: swap;
+	src: url("../fonts/plus-jakarta-sans-latin.woff2") format("woff2");
+	unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+	font-family: "Plus Jakarta Sans";
+	font-style: normal;
+	font-weight: 200 800;
+	font-display: swap;
+	src: url("../fonts/plus-jakarta-sans-latin-ext.woff2") format("woff2");
+	unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* ---------- tokens ---------- */
+
+:root {
+	--mmpcs-text-light: #ffffff;
+	--mmpcs-text-muted: rgba(255, 255, 255, 0.72);
+	--mmpcs-border-subtle: rgba(255, 255, 255, 0.15);
+	--mmpcs-footer-text: rgba(255, 255, 255, 0.35);
+	--mmpcs-footer-link: rgba(255, 255, 255, 0.5);
+	--mmpcs-font-heading: "Syne", sans-serif;
+	--mmpcs-font-body: "Plus Jakarta Sans", sans-serif;
+	--mmpcs-content-width: 1366px;
+
+	/* AutomaticCSS section tokens, resolved to root-font-size-independent px. */
+	--mmpcs-section-padding-block: clamp(48px, calc(4.1749502982vw + 32.970178926px), 90px);
+	--mmpcs-section-padding-inline: clamp(16px, calc(6.3618290258vw - 6.902584493px), 80px);
+	--mmpcs-section-gap: clamp(42.645336px, calc(2.4706425447vw + 33.751022839px), 67.5px);
+}
+
+/* ---------- layout ---------- */
+
+.coming-soon {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--mmpcs-section-gap);
+	min-block-size: 100vh;
+	min-block-size: 100svh;
+	padding-block: var(--mmpcs-section-padding-block);
+	padding-inline: var(--mmpcs-section-padding-inline);
+	background-color: transparent;
+	color: var(--mmpcs-text-light);
+	font-family: var(--mmpcs-font-body);
+}
+
+.coming-soon__main {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	inline-size: 100%;
+	max-inline-size: 1088px;
+	margin-inline: auto;
+	padding-block: 48px 32px;
+	padding-inline: 24px;
+	text-align: center;
+}
+
+/* ---------- logo ---------- */
+
+.coming-soon__logo {
+	display: block;
+	inline-size: var(--mmpcs-logo-width, 260px);
+	max-inline-size: 100%;
+	/*
+	 * 64px reproduces the approved spacing. The Etch original put the same
+	 * .coming-soon__logo class on both the wrapper and the <img>, so its 32px
+	 * bottom margin was applied twice. The class is split here, so the value is
+	 * stated once, deliberately.
+	 */
+	margin-block-end: 64px;
+}
+
+.coming-soon__logo-link {
+	display: inline-block;
+	inline-size: 100%;
+	text-decoration: none;
+	transition: opacity 0.2s ease;
+}
+
+.coming-soon__logo-link:hover {
+	opacity: 0.8;
+}
+
+.coming-soon__logo-link:focus-visible {
+	outline: 2px solid var(--mmpcs-accent);
+	outline-offset: 4px;
+}
+
+.coming-soon__logo-img {
+	display: block;
+	inline-size: 100%;
+	block-size: auto;
+}
+
+/* ---------- copy ---------- */
+
+.coming-soon__badge {
+	display: inline-block;
+	margin: 0 0 24px;
+	padding-block: 5.6px;
+	padding-inline: 14.4px;
+	border: 1px solid var(--mmpcs-accent);
+	color: var(--mmpcs-accent);
+	font-family: var(--mmpcs-font-body);
+	font-size: 12px;
+	font-weight: 700;
+	line-height: 1.4;
+	letter-spacing: 1.92px;
+	text-transform: uppercase;
+}
+
+.coming-soon__title {
+	max-inline-size: 680px;
+	margin: 0 0 16px;
+	color: var(--mmpcs-text-light);
+	font-family: var(--mmpcs-font-heading);
+	font-size: clamp(28px, 4vw, 48px);
+	font-weight: 700;
+	line-height: 1.15;
+	text-wrap: balance;
+}
+
+.coming-soon__subtitle {
+	max-inline-size: 560px;
+	margin: 0 0 40px;
+	color: var(--mmpcs-text-muted);
+	font-size: clamp(15.2px, 2vw, 17.6px);
+	line-height: 1.65;
+}
+
+.coming-soon__divider {
+	inline-size: 48px;
+	block-size: 2px;
+	margin: 0 auto 40px;
+	background-color: var(--mmpcs-accent);
+}
+
+/* ---------- buttons ---------- */
+
+.coming-soon__actions {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 28px;
+	inline-size: 100%;
+	max-inline-size: 800px;
+}
+
+.coming-soon__action-row {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 12px;
+	inline-size: 100%;
+}
+
+.coming-soon__button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6.4px;
+	max-inline-size: 100%;
+	padding-block: 12px;
+	padding-inline: 22.4px;
+	border: 2px solid transparent;
+	color: var(--mmpcs-text-light);
+	font-family: var(--mmpcs-font-body);
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 1;
+	text-decoration: none;
+	white-space: nowrap;
+	cursor: pointer;
+	transition:
+		background-color 0.2s ease,
+		color 0.2s ease,
+		border-color 0.2s ease,
+		opacity 0.2s ease;
+}
+
+.coming-soon__button:focus-visible {
+	outline: 2px solid var(--mmpcs-accent);
+	outline-offset: 4px;
+}
+
+.coming-soon__button--ghost {
+	background-color: transparent;
+	border-color: var(--mmpcs-border-subtle);
+	color: var(--mmpcs-text-light);
+}
+
+.coming-soon__button--ghost:hover {
+	border-color: var(--mmpcs-accent);
+	color: var(--mmpcs-accent);
+}
+
+.coming-soon__button--gold {
+	background-color: var(--mmpcs-accent);
+	border-color: var(--mmpcs-accent);
+	color: var(--mmpcs-ink);
+}
+
+.coming-soon__button--gold:hover {
+	background-color: var(--mmpcs-accent-hover);
+	border-color: var(--mmpcs-accent-hover);
+	color: var(--mmpcs-ink);
+}
+
+.coming-soon__button--navy {
+	background-color: var(--mmpcs-navy);
+	border-color: var(--mmpcs-border-subtle);
+	color: var(--mmpcs-offwhite);
+}
+
+.coming-soon__button--navy:hover {
+	border-color: var(--mmpcs-accent);
+}
+
+.coming-soon__button--crimson {
+	background-color: var(--mmpcs-crimson);
+	border-color: var(--mmpcs-border-subtle);
+	color: var(--mmpcs-offwhite);
+}
+
+.coming-soon__button--crimson:hover {
+	border-color: var(--mmpcs-accent);
+}
+
+/* The support row is quieter than the main row. */
+[data-support-row] .coming-soon__button {
+	font-size: 12.8px;
+	opacity: 0.75;
+}
+
+[data-support-row] .coming-soon__button:hover {
+	opacity: 1;
+}
+
+/* ---------- footer ---------- */
+
+.coming-soon__footer {
+	inline-size: 100%;
+	max-inline-size: var(--mmpcs-content-width);
+	margin-inline: auto;
+	padding-block: 20px;
+	padding-inline: 24px;
+	border-block-start: 1px solid var(--mmpcs-border-subtle);
+	color: var(--mmpcs-footer-text);
+	font-size: 12.48px;
+	line-height: 1.99;
+	text-align: center;
+}
+
+.coming-soon__footer a {
+	display: inline;
+	color: var(--mmpcs-footer-link);
+	text-decoration: none;
+}
+
+.coming-soon__footer a:hover {
+	color: var(--mmpcs-accent);
+}
+
+.coming-soon__footer a:focus-visible {
+	outline: 2px solid var(--mmpcs-accent);
+	outline-offset: 4px;
+}
+
+[data-mmpcs-year] {
+	padding-inline-end: 1ch;
+}
+
+/* ---------- preview flag ---------- */
+
+.mmpcs-preview-flag {
+	position: fixed;
+	z-index: 10;
+	inset-block-end: 16px;
+	inset-inline-start: 50%;
+	translate: -50% 0;
+	padding-block: 8px;
+	padding-inline: 16px;
+	border: 1px solid var(--mmpcs-border-subtle);
+	border-radius: 999px;
+	background-color: rgba(0, 0, 0, 0.6);
+	color: var(--mmpcs-text-light);
+	font-family: var(--mmpcs-font-body);
+	font-size: 12px;
+	backdrop-filter: blur(8px);
+}
+
+/* ---------- small screens ---------- */
+
+@media (max-width: 520px) {
+	.coming-soon__action-row {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.coming-soon__button {
+		inline-size: 100%;
+		white-space: normal;
+	}
+}

@@ -1,0 +1,115 @@
+/*
+ * MMP Coming Soon — animated aurora background.
+ *
+ * Converted from the "MMP Aurora Background" Etch component. The original
+ * positioned blobs with :nth-child(7n + N) selectors tied to a fixed palette;
+ * here every blob carries its own custom properties so the colour list can be
+ * any length.
+ */
+
+.mmpcs-aurora {
+	position: fixed;
+	inset: 0;
+	z-index: 0;
+	min-block-size: 100svh;
+	overflow: clip;
+	pointer-events: none;
+	isolation: isolate;
+	opacity: var(--mmpcs-aurora-opacity, 0.82);
+	contain: strict;
+}
+
+.mmpcs-aurora__base {
+	position: absolute;
+	inset: 0;
+	z-index: -2;
+	background: var(--mmpcs-aurora-base, #010104);
+}
+
+.mmpcs-aurora__blob {
+	position: absolute;
+	inset: auto;
+	inset-inline-start: var(--mmpcs-blob-x, 50%);
+	inset-block-start: var(--mmpcs-blob-y, 50%);
+	inline-size: calc(var(--mmpcs-aurora-size, 68vmax) * var(--mmpcs-blob-ratio, 1));
+	aspect-ratio: 1;
+	border-radius: 50%;
+	background: radial-gradient(circle, var(--mmpcs-blob-color) 0 18%, transparent 67%);
+	filter: blur(var(--mmpcs-aurora-blur, 72px));
+	mix-blend-mode: screen;
+	opacity: 0.9;
+	will-change: transform;
+	animation-duration: var(--mmpcs-aurora-duration, 24s);
+	animation-timing-function: ease-in-out;
+	animation-iteration-count: infinite;
+	animation-direction: alternate;
+	animation-name: mmpcs-drift-a;
+}
+
+@keyframes mmpcs-drift-a {
+	0% {
+		transform: translate3d(-52%, -48%, 0) scale(0.92) rotate(0deg);
+	}
+	55% {
+		transform: translate3d(-34%, -61%, 0) scale(1.12) rotate(16deg);
+	}
+	100% {
+		transform: translate3d(-64%, -29%, 0) scale(0.98) rotate(-12deg);
+	}
+}
+
+@keyframes mmpcs-drift-b {
+	0% {
+		transform: translate3d(-58%, -43%, 0) scale(1.04) rotate(0deg);
+	}
+	48% {
+		transform: translate3d(-72%, -24%, 0) scale(0.9) rotate(-18deg);
+	}
+	100% {
+		transform: translate3d(-37%, -66%, 0) scale(1.14) rotate(14deg);
+	}
+}
+
+@keyframes mmpcs-drift-c {
+	0% {
+		transform: translate3d(-45%, -58%, 0) scale(0.9) rotate(0deg);
+	}
+	44% {
+		transform: translate3d(-68%, -45%, 0) scale(1.16) rotate(20deg);
+	}
+	100% {
+		transform: translate3d(-28%, -71%, 0) scale(1.02) rotate(-16deg);
+	}
+}
+
+@keyframes mmpcs-drift-d {
+	0% {
+		transform: translate3d(-63%, -36%, 0) scale(1.1) rotate(0deg);
+	}
+	52% {
+		transform: translate3d(-42%, -72%, 0) scale(0.94) rotate(-14deg);
+	}
+	100% {
+		transform: translate3d(-75%, -52%, 0) scale(1.08) rotate(18deg);
+	}
+}
+
+.mmpcs-aurora[data-motion="off"] .mmpcs-aurora__blob {
+	animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.mmpcs-aurora__blob {
+		animation: none;
+	}
+}
+
+@media (max-width: 767px) {
+	.mmpcs-aurora {
+		--mmpcs-aurora-blur: min(56px, 12vw);
+	}
+
+	.mmpcs-aurora__blob {
+		inline-size: calc(92vmax * var(--mmpcs-blob-ratio, 1));
+	}
+}

@@ -1,0 +1,196 @@
+/* MMP Coming Soon — options screen. */
+
+.mmpcs-lede {
+	max-width: 46rem;
+}
+
+.mmpcs-lede .button {
+	margin-left: 0.5rem;
+	vertical-align: baseline;
+}
+
+.mmpcs-tabs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem;
+	margin: 1.25rem 0 0;
+	border-bottom: 1px solid #c3c4c7;
+}
+
+.mmpcs-tab {
+	margin: 0;
+	padding: 0.6rem 1rem;
+	border: 1px solid transparent;
+	border-bottom: 0;
+	background: none;
+	color: #50575e;
+	font-size: 14px;
+	line-height: 1.4;
+	cursor: pointer;
+}
+
+.mmpcs-tab:hover {
+	color: #135e96;
+}
+
+.mmpcs-tab.is-active {
+	border-color: #c3c4c7;
+	border-radius: 3px 3px 0 0;
+	background: #fff;
+	color: #1d2327;
+	font-weight: 600;
+	margin-bottom: -1px;
+}
+
+.mmpcs-panel {
+	display: none;
+	padding: 0.5rem 1.5rem 1rem;
+	border: 1px solid #c3c4c7;
+	border-top: 0;
+	background: #fff;
+}
+
+.mmpcs-panel.is-active {
+	display: block;
+}
+
+.mmpcs-panel h2 {
+	margin-top: 1.5rem;
+}
+
+.mmpcs-switch {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.mmpcs-media {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+
+.mmpcs-repeater {
+	max-width: 60rem;
+}
+
+.mmpcs-rows {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	margin-bottom: 0.75rem;
+}
+
+.mmpcs-row {
+	display: flex;
+	align-items: flex-end;
+	gap: 0.75rem;
+	padding: 0.75rem;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	background: #f6f7f7;
+}
+
+.mmpcs-row--color {
+	align-items: center;
+	max-width: 22rem;
+}
+
+.mmpcs-move {
+	display: flex;
+	flex-direction: column;
+	padding-bottom: 0.25rem;
+}
+
+.mmpcs-move .button-link,
+.mmpcs-remove {
+	color: #646970;
+	text-decoration: none;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.mmpcs-move .button-link:hover {
+	color: #135e96;
+}
+
+.mmpcs-remove {
+	margin-left: auto;
+	padding-bottom: 0.35rem;
+}
+
+.mmpcs-remove:hover {
+	color: #b32d2e;
+}
+
+.mmpcs-row--color .mmpcs-remove {
+	padding-bottom: 0;
+}
+
+.mmpcs-field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	flex: 1 1 12rem;
+}
+
+.mmpcs-field--wide {
+	flex: 2 1 18rem;
+}
+
+.mmpcs-field--narrow {
+	flex: 0 0 9rem;
+}
+
+.mmpcs-field > span {
+	color: #50575e;
+	font-size: 12px;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.mmpcs-field input,
+.mmpcs-field select {
+	width: 100%;
+}
+
+.mmpcs-range {
+	width: 18rem;
+	max-width: 100%;
+	vertical-align: middle;
+}
+
+.mmpcs-output {
+	display: inline-block;
+	min-width: 4rem;
+	margin-left: 0.75rem;
+	color: #50575e;
+	font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 782px) {
+	.mmpcs-row {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.mmpcs-move {
+		flex-direction: row;
+	}
+
+	.mmpcs-remove {
+		margin-left: 0;
+		align-self: flex-end;
+	}
+}
+
+.mmpcs-behind {
+	margin-left: 0.5rem;
+	color: #b32d2e;
+}
+
+.mmpcs-current {
+	margin-left: 0.5rem;
+	color: #007017;
+}

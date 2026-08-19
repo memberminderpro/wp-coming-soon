@@ -1,0 +1,106 @@
+name: Release
+
+# main    -> stable releases, consumed by every customer site
+# develop -> beta pre-releases, consumed only by sites on the beta channel
+on:
+  push:
+    branches: [main, develop]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    name: Release PR / tag
+    runs-on: ubuntu-latest
+    outputs:
+      released: ${{ steps.rp.outputs.release_created }}
+      tag: ${{ steps.rp.outputs.tag_name }}
+      version: ${{ steps.rp.outputs.version }}
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: rp
+        with:
+          target-branch: ${{ github.ref_name }}
+          # develop carries its own config so that the prerelease settings do
+          # not travel to main when develop is merged.
+          config-file: ${{ github.ref_name == 'develop' && '.github/release-please-config.develop.json' || 'release-please-config.json' }}
+          manifest-file: ${{ github.ref_name == 'develop' && '.github/.release-please-manifest.develop.json' || '.release-please-manifest.json' }}
+
+  publish:
+    name: Build and publish
+    needs: release-please
+    if: needs.release-please.outputs.released == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the released tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release-please.outputs.tag }}
+
+      - name: Verify the plugin header matches the tag
+        run: |
+          set -euo pipefail
+          HEADER="$(grep -m1 -E '^ \* Version:' mmp-coming-soon.php | awk '{print $3}')"
+          CONST="$(grep -m1 -E "define\( 'MMPCS_VERSION'" mmp-coming-soon.php | sed -E "s/.*'([^']+)'.*/\1/")"
+          WANT="${{ needs.release-please.outputs.version }}"
+          echo "header=$HEADER const=$CONST want=$WANT"
+          test "$HEADER" = "$WANT"
+          test "$CONST" = "$WANT"
+
+      - name: Lint PHP
+        run: |
+          set -euo pipefail
+          find . -name '*.php' -not -path './.git/*' -print0 | xargs -0 -n1 php -l
+
+      - name: Build the plugin zip
+        run: bin/build-zip.sh "${{ github.workspace }}/mmp-coming-soon.zip"
+
+      - name: Attach the zip to the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${{ needs.release-please.outputs.tag }}" mmp-coming-soon.zip --clobber
+
+      - name: Publish the update manifest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            CHANNEL=stable
+          else
+            CHANNEL=beta
+          fi
+
+          git config --global user.name  "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # The manifests branch is orphaned on purpose: nothing merges into it,
+          # so a develop-to-main merge can never advertise a beta build to
+          # stable sites.
+          git clone --depth 1 --branch manifests \
+            "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" manifests-branch \
+            || {
+              git clone --depth 1 "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" manifests-branch
+              cd manifests-branch
+              git checkout --orphan manifests
+              git rm -rf . >/dev/null 2>&1 || true
+              cd ..
+            }
+
+          python3 bin/manifest.py "$CHANNEL" \
+            "${{ needs.release-please.outputs.version }}" \
+            "${{ github.repository }}" \
+            "manifests-branch/${CHANNEL}.json"
+
+          cd manifests-branch
+          git add "${CHANNEL}.json"
+          git diff --cached --quiet && { echo "manifest unchanged"; exit 0; }
+          git commit -m "chore: publish ${CHANNEL} manifest ${{ needs.release-please.outputs.version }}"
+          git push origin manifests
