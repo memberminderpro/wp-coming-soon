@@ -141,6 +141,17 @@ html {
 	margin-block-end: 64px;
 }
 
+/*
+ * The optional second logo. It shares the primary's markup, so it has to undo
+ * the two things that are specific to the hero slot: the 64px gap beneath it,
+ * and the width variable, which would otherwise size every logo on the page to
+ * the primary's setting.
+ */
+.coming-soon__logo--secondary {
+	inline-size: var(--mmpcs-logo-secondary-width, 200px);
+	margin-block: 8px 32px;
+}
+
 .coming-soon__logo-link {
 	display: inline-block;
 	inline-size: 100%;
@@ -193,7 +204,13 @@ html {
 
 .coming-soon__subtitle {
 	max-inline-size: 560px;
-	margin: 0 0 40px;
+	/*
+	 * Spacing now sits between paragraphs, because the description can be more
+	 * than one. The 40px that used to follow a lone paragraph is restored on the
+	 * last one below, so the gap before the divider is identical to 1.3.0
+	 * whether the description is one paragraph or four.
+	 */
+	margin: 0 0 16px;
 	color: var(--mmpcs-text-muted);
 	font-size: clamp(15.2px, 2vw, 17.6px);
 	line-height: 1.65;
@@ -211,6 +228,14 @@ html {
 	 */
 	text-wrap: balance;
 	text-wrap: pretty;
+}
+
+/*
+ * :last-of-type is safe here: the only other <p> among these siblings is the
+ * title, which always precedes the description. The badge is an <h1>.
+ */
+.coming-soon__subtitle:last-of-type {
+	margin-block-end: 40px;
 }
 
 .coming-soon__divider {

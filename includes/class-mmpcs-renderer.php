@@ -86,20 +86,23 @@ class MMPCS_Renderer {
 <section class="coming-soon">
 	<main class="coming-soon__main">
 		<?php echo self::logo( $s['logo'] ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
+		<?php echo self::secondary_logo( $s, 'after_logo' ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
 		<?php if ( '' !== $s['badge_text'] ) : ?>
 		<h1 class="coming-soon__badge"><?php echo esc_html( $s['badge_text'] ); ?></h1>
 		<?php endif; ?>
+		<?php echo self::secondary_logo( $s, 'after_badge' ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
 		<?php if ( '' !== $s['heading'] ) : ?>
 		<p class="coming-soon__title"><?php echo esc_html( $s['heading'] ); ?></p>
 		<?php endif; ?>
-		<?php if ( '' !== $s['description'] ) : ?>
-		<p class="coming-soon__subtitle"><?php echo esc_html( $s['description'] ); ?></p>
-		<?php endif; ?>
+		<?php echo self::secondary_logo( $s, 'after_heading' ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
+		<?php echo self::description( $s['description'] ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
+		<?php echo self::secondary_logo( $s, 'after_description' ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
 		<div class="coming-soon__divider"></div>
 		<div class="coming-soon__actions">
 			<?php echo self::button_row( $s['buttons_main'], false ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
 			<?php echo self::button_row( $s['buttons_support'], true ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
 		</div>
+		<?php echo self::secondary_logo( $s, 'after_buttons' ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
 	</main>
 	<?php echo self::footer( $s['footer'] ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
 </section>
@@ -134,6 +137,7 @@ class MMPCS_Renderer {
 			'--mmpcs-crimson'      => $p['crimson'],
 			'--mmpcs-offwhite'     => $p['offwhite'],
 			'--mmpcs-logo-width'   => (int) $s['logo']['width'] . 'px',
+			'--mmpcs-logo-secondary-width' => (int) $s['logo_secondary']['width'] . 'px',
 			'--mmpcs-page-bg'      => ! empty( $s['aurora']['enabled'] ) ? $s['aurora']['base'] : $p['ink'],
 		);
 
@@ -144,6 +148,88 @@ class MMPCS_Renderer {
 		$css .= '}';
 
 		return $css;
+	}
+
+	/**
+	 * The description, as one paragraph per blank-line-separated block.
+	 *
+	 * The field has always been a textarea and sanitize_textarea_field has
+	 * always kept the newlines, but the renderer used to pour the whole string
+	 * into a single <p>, where HTML collapses the whitespace -- so a break the
+	 * author typed and saved silently vanished on the page.
+	 *
+	 * @param string $description Raw description text.
+	 * @return string
+	 */
+	private static function description( $description ) {
+		$description = trim( (string) $description );
+
+		if ( '' === $description ) {
+			return '';
+		}
+
+		// Normalise line endings first, so a paste from Windows or an old Mac
+		// splits on the same rule as a paste from anywhere else.
+		$description = str_replace( array( "\r\n", "\r" ), "\n", $description );
+
+		// A blank line starts a new paragraph; a lone newline is a line break
+		// inside one, which is what someone typing into a textarea expects.
+		$blocks = preg_split( '/\n\s*\n/', $description );
+		$out    = '';
+
+		foreach ( $blocks as $block ) {
+			$block = trim( $block );
+
+			if ( '' === $block ) {
+				continue;
+			}
+
+			$out .= '<p class="coming-soon__subtitle">' . nl2br( esc_html( $block ) ) . '</p>';
+		}
+
+		return $out;
+	}
+
+	/**
+	 * The optional secondary logo, rendered only in the slot it is assigned to.
+	 *
+	 * Called at every slot; returns nothing except at the chosen one. That
+	 * keeps the placement decision here rather than spread through the markup.
+	 *
+	 * @param array  $s    Settings.
+	 * @param string $slot The slot currently being rendered.
+	 * @return string
+	 */
+	private static function secondary_logo( array $s, $slot ) {
+		if ( empty( $s['logo_secondary']['url'] ) ) {
+			return '';
+		}
+
+		if ( $slot !== $s['logo_secondary']['position'] ) {
+			return '';
+		}
+
+		$logo = $s['logo_secondary'];
+
+		$img = sprintf(
+			'<img class="coming-soon__logo-img" src="%s" alt="%s" width="%d" decoding="async" loading="lazy">',
+			esc_url( $logo['url'] ),
+			esc_attr( $logo['alt'] ),
+			(int) $logo['width']
+		);
+
+		if ( empty( $logo['link'] ) ) {
+			return '<div class="coming-soon__logo coming-soon__logo--secondary">' . $img . '</div>';
+		}
+
+		// The alt text doubles as the link's accessible name; a second field for
+		// it would be one more thing to fill in and keep in step.
+		return sprintf(
+			'<div class="coming-soon__logo coming-soon__logo--secondary"><a class="coming-soon__logo-link" href="%s"%s>%s</a></div>',
+			esc_url( $logo['link'] ),
+			'' !== $logo['alt'] ? ' aria-label="' . esc_attr( $logo['alt'] ) . '"' : '',
+			$img
+		);
 	}
 
 	/**
