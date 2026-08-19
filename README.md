@@ -87,33 +87,52 @@ and the plugin ignores a manifest whose channel does not match the site's.
 ### Release flow
 
 Releases are driven by [release-please](https://github.com/googleapis/release-please)
-from Conventional Commit messages. Nobody edits a version number by hand.
+from Conventional Commit messages. Nobody edits a version number by hand, and
+every step runs in GitHub Actions.
 
 ```
-feature branch ──PR──▶ develop ──▶ release PR ──merge──▶ v1.2.0-beta.1  (pre-release)
-                                                          beta sites update
+feature branch ──PR──▶ develop ──▶ release PR ──merge──▶ v1.2.0-beta  (pre-release)
+                                                          beta manifest published
+                                                          canary site updates
 
-develop ───────PR──▶ main ─────▶ release PR ──merge──▶ v1.2.0           (release)
-                                                          all sites update
+develop ───────PR──▶ main ─────▶ release PR ──merge──▶ v1.2.0        (release)
+                                                          nothing ships yet
+                                                          ▼
+                                              Deploy workflow (manual)
+                                                          ▼
+                                                stable manifest published
+                                                all customer sites update
 ```
 
 1. Open a PR into `develop`. The PR **title** must be a Conventional Commit
    (`feat: …`, `fix: …`), because a squash merge uses it as the commit message.
    A CI check enforces this: a bad title means release-please silently skips
    the release.
-2. When you want to cut a beta, run `bin/release-pr.sh`. It opens a release PR
-   with the version bump and changelog entry. Merging it tags a `-beta.N`
-   pre-release, attaches the zip, and publishes the beta manifest.
-3. When the beta looks good, open a PR from `develop` into `main`, then run
-   `bin/release-pr.sh main` and merge that release PR to cut the stable
-   release.
+2. Merging it opens or updates a release PR against `develop`. Merging *that*
+   tags a pre-release, builds the zip, and publishes the beta manifest, so the
+   canary picks it up.
+3. When the beta looks good, open a PR from `develop` into `main`. Merging its
+   release PR tags and builds the stable release — but publishes nothing.
+4. **Run the Deploy workflow** from the Actions tab against the stable tag.
+   That publishes `manifests/stable.json`, which is what makes every customer
+   site see the update. It refuses anything that is not a plain `vX.Y.Z` tag,
+   refuses a release marked as a prerelease, and refuses a release whose
+   package is missing or not downloadable.
 
-GitHub Actions never opens a pull request. It runs with
-`skip-github-pull-request: true` and `contents: write` only, so its job is
-limited to tagging and publishing what a human already merged.
+Releasing and shipping are deliberately separate. A stable release can sit on
+GitHub indefinitely; no customer site knows about it until someone dispatches
+the deploy.
 
-Sites pick up a release within six hours, or immediately from
-**Coming Soon → Updates → Check for updates now**.
+### Identity
+
+release-please runs as the **`mmpro-release-automation`** GitHub App, not as
+GitHub Actions, using the org-level `RELEASE_APP_ID` and
+`RELEASE_APP_PRIVATE_KEY` secrets. Two reasons, both load-bearing:
+
+* The organization forbids GitHub Actions from creating pull requests. A
+  GitHub App is a separate identity, so the policy does not apply to it.
+* Events created with the default `GITHUB_TOKEN` do not trigger other
+  workflows. A tag pushed by `GITHUB_TOKEN` would never fire the build.
 
 ### Version numbers
 
