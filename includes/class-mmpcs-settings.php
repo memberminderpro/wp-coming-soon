@@ -28,17 +28,29 @@ class MMPCS_Settings {
 	);
 
 	/**
-	 * Where the secondary logo may be placed. The key is the element it is
-	 * rendered after; the label is what the settings screen shows.
+	 * Where a logo may be placed. There is no "main" logo: every logo is a row
+	 * in one repeater and can sit in any slot, which is what lets a site build
+	 * a sponsor or partner block anywhere on the page.
 	 *
 	 * @var array<string,string>
 	 */
 	const LOGO_POSITIONS = array(
-		'after_logo'        => 'Below the main logo',
+		'top'               => 'Top of the page',
 		'after_badge'       => 'Below the badge',
 		'after_heading'     => 'Below the heading',
 		'after_description' => 'Below the description',
 		'after_buttons'     => 'Below the buttons',
+		'above_footer'      => 'Above the footer text',
+	);
+
+	/**
+	 * How several logos sharing one slot are arranged.
+	 *
+	 * @var array<string,string>
+	 */
+	const LOGO_LAYOUTS = array(
+		'row'   => 'Side by side',
+		'stack' => 'Stacked',
 	);
 
 	/**
@@ -48,7 +60,7 @@ class MMPCS_Settings {
 	 * @var array<string,string[]>
 	 */
 	const SECTIONS = array(
-		'content'    => array( 'logo', 'logo_secondary', 'badge_text', 'heading', 'description' ),
+		'content'    => array( 'logos', 'logo_layout', 'badge_text', 'heading', 'description' ),
 		'buttons'    => array( 'buttons_main', 'buttons_support' ),
 		'footer'     => array( 'footer' ),
 		'background' => array( 'aurora' ),
@@ -80,26 +92,26 @@ class MMPCS_Settings {
 			'presets'        => array(),
 			'undo'           => array(),
 
-			'logo'      => array(
-				'url'   => 'https://www.memberminderpro.com/wp-content/uploads/MMP-LOGO-WHITE.svg',
-				'alt'   => 'Member Minder Pro',
-				'link'  => 'https://memberminderpro.com/',
-				'aria'  => 'Member Minder Pro home page',
-				'width' => 260,
+			/*
+			 * Every logo is a row here, ordered by the repeater. Row order is
+			 * display order within a slot, so no separate weight is stored.
+			 */
+			'logos' => array(
+				array(
+					'url'      => 'https://www.memberminderpro.com/wp-content/uploads/MMP-LOGO-WHITE.svg',
+					'alt'      => 'Member Minder Pro',
+					'aria'     => 'Member Minder Pro home page',
+					'link'     => 'https://memberminderpro.com/',
+					'width'    => 260,
+					'position' => 'top',
+				),
 			),
 
 			/*
-			 * A second, optional image -- a client's own logo sitting under the
-			 * copy while the mascot keeps the top slot. Empty by default, so an
-			 * existing site renders exactly as it did before the upgrade.
+			 * Arrangement per slot, consulted only where a slot holds more than
+			 * one logo. Keyed by position so two slots can differ.
 			 */
-			'logo_secondary' => array(
-				'url'      => '',
-				'alt'      => '',
-				'link'     => '',
-				'width'    => 200,
-				'position' => 'after_description',
-			),
+			'logo_layout' => array(),
 
 			'badge_text'  => 'Website Under Development',
 			'heading'     => 'Something Great is Being Built Here',
@@ -178,6 +190,8 @@ class MMPCS_Settings {
 		if ( ! is_array( $stored ) ) {
 			$stored = array();
 		}
+
+		$stored = self::migrate_legacy_logos( $stored );
 
 		$defaults = self::defaults();
 		$merged   = $defaults;
@@ -399,6 +413,9 @@ class MMPCS_Settings {
 	 * @return bool Whether anything was applied.
 	 */
 	public static function apply_portable( array $payload, $label = '' ) {
+		// An export or preset written before the repeater carries the old keys.
+		$payload = self::migrate_legacy_logos( $payload );
+
 		$allowed = self::portable_keys();
 		$usable  = array_intersect_key( $payload, array_flip( $allowed ) );
 
@@ -545,26 +562,8 @@ class MMPCS_Settings {
 		$channel                = isset( $input['update_channel'] ) ? sanitize_key( $input['update_channel'] ) : 'stable';
 		$out['update_channel']  = isset( MMPCS_Updater::CHANNELS[ $channel ] ) ? $channel : 'stable';
 
-		$logo             = isset( $input['logo'] ) && is_array( $input['logo'] ) ? $input['logo'] : array();
-		$out['logo']      = array(
-			'url'   => isset( $logo['url'] ) ? esc_url_raw( trim( $logo['url'] ) ) : '',
-			'alt'   => isset( $logo['alt'] ) ? sanitize_text_field( $logo['alt'] ) : '',
-			'link'  => isset( $logo['link'] ) ? esc_url_raw( trim( $logo['link'] ) ) : '',
-			'aria'  => isset( $logo['aria'] ) ? sanitize_text_field( $logo['aria'] ) : '',
-			'width' => isset( $logo['width'] ) ? self::clamp_int( $logo['width'], 40, 800, 260 ) : 260,
-		);
-
-		$second   = isset( $input['logo_secondary'] ) && is_array( $input['logo_secondary'] ) ? $input['logo_secondary'] : array();
-		$position = isset( $second['position'] ) ? sanitize_key( $second['position'] ) : 'after_description';
-
-		$out['logo_secondary'] = array(
-			'url'      => isset( $second['url'] ) ? esc_url_raw( trim( $second['url'] ) ) : '',
-			'alt'      => isset( $second['alt'] ) ? sanitize_text_field( $second['alt'] ) : '',
-			'link'     => isset( $second['link'] ) ? esc_url_raw( trim( $second['link'] ) ) : '',
-			'width'    => isset( $second['width'] ) ? self::clamp_int( $second['width'], 40, 800, 200 ) : 200,
-			// An unknown slot falls back rather than rendering nowhere.
-			'position' => isset( self::LOGO_POSITIONS[ $position ] ) ? $position : 'after_description',
-		);
+		$out['logos']       = self::sanitize_logos( isset( $input['logos'] ) ? $input['logos'] : array() );
+		$out['logo_layout'] = self::sanitize_logo_layout( isset( $input['logo_layout'] ) ? $input['logo_layout'] : array() );
 
 		$out['badge_text']  = isset( $input['badge_text'] ) ? sanitize_text_field( $input['badge_text'] ) : '';
 		$out['heading']     = isset( $input['heading'] ) ? sanitize_text_field( $input['heading'] ) : '';
@@ -631,6 +630,138 @@ class MMPCS_Settings {
 	 * @param mixed $rows Raw rows.
 	 * @return array
 	 */
+	/**
+	 * Sanitise the logo repeater.
+	 *
+	 * A row with no image URL is dropped rather than stored empty, so removing
+	 * the URL is the same gesture as deleting the row.
+	 *
+	 * @param mixed $rows Raw repeater input.
+	 * @return array
+	 */
+	private static function sanitize_logos( $rows ) {
+		if ( ! is_array( $rows ) ) {
+			return array();
+		}
+
+		$out = array();
+
+		foreach ( $rows as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+
+			$url = isset( $row['url'] ) ? esc_url_raw( trim( $row['url'] ) ) : '';
+
+			if ( '' === $url ) {
+				continue;
+			}
+
+			$position = isset( $row['position'] ) ? sanitize_key( $row['position'] ) : 'top';
+
+			$out[] = array(
+				'url'   => $url,
+				'alt'   => isset( $row['alt'] ) ? sanitize_text_field( $row['alt'] ) : '',
+				// The ARIA label names the link's destination; alt describes the
+				// image. They are different jobs, so they stay separate fields.
+				'aria'  => isset( $row['aria'] ) ? sanitize_text_field( $row['aria'] ) : '',
+				'link'  => isset( $row['link'] ) ? esc_url_raw( trim( $row['link'] ) ) : '',
+				'width' => isset( $row['width'] ) ? self::clamp_int( $row['width'], 40, 800, 200 ) : 200,
+				// An unknown slot falls back rather than rendering nowhere.
+				'position' => isset( self::LOGO_POSITIONS[ $position ] ) ? $position : 'top',
+			);
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Sanitise the per-slot arrangement map.
+	 *
+	 * @param mixed $map Raw input, keyed by position.
+	 * @return array<string,string>
+	 */
+	private static function sanitize_logo_layout( $map ) {
+		if ( ! is_array( $map ) ) {
+			return array();
+		}
+
+		$out = array();
+
+		foreach ( $map as $position => $layout ) {
+			$position = sanitize_key( $position );
+			$layout   = sanitize_key( $layout );
+
+			if ( ! isset( self::LOGO_POSITIONS[ $position ] ) || ! isset( self::LOGO_LAYOUTS[ $layout ] ) ) {
+				continue;
+			}
+
+			// "row" is the default, so storing it would be noise.
+			if ( 'row' === $layout ) {
+				continue;
+			}
+
+			$out[ $position ] = $layout;
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Fold the pre-repeater logo settings into the logos list.
+	 *
+	 * Up to 1.4.0-beta.2 there was a fixed "logo" and an optional
+	 * "logo_secondary". Both become ordinary rows: the old primary keeps the
+	 * top slot it always rendered in, and the old secondary keeps whatever slot
+	 * it was assigned. Runs on read and on import, is idempotent, and writes
+	 * nothing -- the legacy keys simply stop being persisted at the next save,
+	 * because sanitize() no longer emits them.
+	 *
+	 * @param array $stored Stored or imported settings.
+	 * @return array
+	 */
+	public static function migrate_legacy_logos( array $stored ) {
+		$has_legacy = isset( $stored['logo'] ) || isset( $stored['logo_secondary'] );
+
+		if ( ! $has_legacy ) {
+			return $stored;
+		}
+
+		// A payload carrying both shapes has already been migrated; the legacy
+		// keys are leftovers and the list wins.
+		if ( isset( $stored['logos'] ) && is_array( $stored['logos'] ) ) {
+			unset( $stored['logo'], $stored['logo_secondary'] );
+
+			return $stored;
+		}
+
+		$logos = array();
+
+		foreach ( array( 'logo' => 'top', 'logo_secondary' => 'after_description' ) as $key => $fallback ) {
+			if ( empty( $stored[ $key ]['url'] ) ) {
+				continue;
+			}
+
+			$legacy   = $stored[ $key ];
+			$position = isset( $legacy['position'] ) ? sanitize_key( $legacy['position'] ) : $fallback;
+
+			$logos[] = array(
+				'url'   => $legacy['url'],
+				'alt'   => isset( $legacy['alt'] ) ? $legacy['alt'] : '',
+				// The secondary logo had no ARIA field and reused its alt text.
+				'aria'  => isset( $legacy['aria'] ) ? $legacy['aria'] : '',
+				'link'  => isset( $legacy['link'] ) ? $legacy['link'] : '',
+				'width' => isset( $legacy['width'] ) ? $legacy['width'] : 200,
+				'position' => isset( self::LOGO_POSITIONS[ $position ] ) ? $position : $fallback,
+			);
+		}
+
+		$stored['logos'] = $logos;
+		unset( $stored['logo'], $stored['logo_secondary'] );
+
+		return $stored;
+	}
+
 	private static function sanitize_buttons( $rows ) {
 		$out = array();
 

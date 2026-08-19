@@ -85,26 +85,25 @@ class MMPCS_Renderer {
 <?php echo MMPCS_Aurora::markup( $s['aurora'] ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
 <section class="coming-soon">
 	<main class="coming-soon__main">
-		<?php echo self::logo( $s['logo'] ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
-		<?php echo self::secondary_logo( $s, 'after_logo' ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
+		<?php echo self::logo_group( $s, 'top' ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
 		<?php if ( '' !== $s['badge_text'] ) : ?>
 		<h1 class="coming-soon__badge"><?php echo esc_html( $s['badge_text'] ); ?></h1>
 		<?php endif; ?>
-		<?php echo self::secondary_logo( $s, 'after_badge' ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
+		<?php echo self::logo_group( $s, 'after_badge' ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
 		<?php if ( '' !== $s['heading'] ) : ?>
 		<p class="coming-soon__title"><?php echo esc_html( $s['heading'] ); ?></p>
 		<?php endif; ?>
-		<?php echo self::secondary_logo( $s, 'after_heading' ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
+		<?php echo self::logo_group( $s, 'after_heading' ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
 		<?php echo self::description( $s['description'] ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
-		<?php echo self::secondary_logo( $s, 'after_description' ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
+		<?php echo self::logo_group( $s, 'after_description' ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
 		<div class="coming-soon__divider"></div>
 		<div class="coming-soon__actions">
 			<?php echo self::button_row( $s['buttons_main'], false ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
 			<?php echo self::button_row( $s['buttons_support'], true ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
 		</div>
-		<?php echo self::secondary_logo( $s, 'after_buttons' ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
+		<?php echo self::logo_group( $s, 'after_buttons' ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
 	</main>
-	<?php echo self::footer( $s['footer'] ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
+	<?php echo self::footer( $s['footer'], self::logo_group( $s, 'above_footer' ) ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
 </section>
 <script src="<?php echo esc_url( add_query_arg( 'ver', $version, MMPCS_URL . 'assets/js/coming-soon.js' ) ); ?>" defer></script>
 <?php if ( $is_preview ) : ?>
@@ -136,8 +135,6 @@ class MMPCS_Renderer {
 			'--mmpcs-navy'         => $p['navy'],
 			'--mmpcs-crimson'      => $p['crimson'],
 			'--mmpcs-offwhite'     => $p['offwhite'],
-			'--mmpcs-logo-width'   => (int) $s['logo']['width'] . 'px',
-			'--mmpcs-logo-secondary-width' => (int) $s['logo_secondary']['width'] . 'px',
 			'--mmpcs-page-bg'      => ! empty( $s['aurora']['enabled'] ) ? $s['aurora']['base'] : $p['ink'],
 		);
 
@@ -191,51 +188,56 @@ class MMPCS_Renderer {
 	}
 
 	/**
-	 * The optional secondary logo, rendered only in the slot it is assigned to.
+	 * Every logo assigned to one slot, in repeater order.
 	 *
-	 * Called at every slot; returns nothing except at the chosen one. That
-	 * keeps the placement decision here rather than spread through the markup.
+	 * Called at each slot in turn, returning nothing for the slots that hold no
+	 * logos, which keeps the placement rules here rather than scattered through
+	 * the markup. Row order is display order, so ordering needs no stored
+	 * weight -- moving a row in the repeater moves it on the page.
 	 *
 	 * @param array  $s    Settings.
-	 * @param string $slot The slot currently being rendered.
+	 * @param string $slot Slot being rendered.
 	 * @return string
 	 */
-	private static function secondary_logo( array $s, $slot ) {
-		if ( empty( $s['logo_secondary']['url'] ) ) {
+	private static function logo_group( array $s, $slot ) {
+		$logos = array();
+
+		foreach ( $s['logos'] as $logo ) {
+			if ( empty( $logo['url'] ) || $slot !== $logo['position'] ) {
+				continue;
+			}
+
+			$logos[] = $logo;
+		}
+
+		if ( empty( $logos ) ) {
 			return '';
 		}
 
-		if ( $slot !== $s['logo_secondary']['position'] ) {
-			return '';
-		}
+		// Arrangement only means anything once a slot holds more than one.
+		$layout = isset( $s['logo_layout'][ $slot ] ) ? $s['logo_layout'][ $slot ] : 'row';
+		$layout = isset( MMPCS_Settings::LOGO_LAYOUTS[ $layout ] ) ? $layout : 'row';
 
-		$logo = $s['logo_secondary'];
-
-		$img = sprintf(
-			'<img class="coming-soon__logo-img" src="%s" alt="%s" width="%d" decoding="async" loading="lazy">',
-			esc_url( $logo['url'] ),
-			esc_attr( $logo['alt'] ),
-			(int) $logo['width']
+		$out = sprintf(
+			'<div class="coming-soon__logos coming-soon__logos--%s coming-soon__logos--slot-%s">',
+			esc_attr( $layout ),
+			esc_attr( str_replace( '_', '-', $slot ) )
 		);
 
-		if ( empty( $logo['link'] ) ) {
-			return '<div class="coming-soon__logo coming-soon__logo--secondary">' . $img . '</div>';
+		foreach ( $logos as $logo ) {
+			$out .= self::logo( $logo );
 		}
 
-		// The alt text doubles as the link's accessible name; a second field for
-		// it would be one more thing to fill in and keep in step.
-		return sprintf(
-			'<div class="coming-soon__logo coming-soon__logo--secondary"><a class="coming-soon__logo-link" href="%s"%s>%s</a></div>',
-			esc_url( $logo['link'] ),
-			'' !== $logo['alt'] ? ' aria-label="' . esc_attr( $logo['alt'] ) . '"' : '',
-			$img
-		);
+		return $out . '</div>';
 	}
 
 	/**
-	 * Logo block. Renders nothing when no image is configured.
+	 * A single logo.
 	 *
-	 * @param array $logo Logo settings.
+	 * Width is an inline custom property rather than a global variable, so one
+	 * slot can mix a wide wordmark with a square badge.
+	 *
+	 * @param array $logo One repeater row.
 	 * @return string
 	 */
 	private static function logo( array $logo ) {
@@ -250,14 +252,25 @@ class MMPCS_Renderer {
 			(int) $logo['width']
 		);
 
+		$open = sprintf(
+			'<div class="coming-soon__logo" style="--mmpcs-logo-w:%dpx">',
+			(int) $logo['width']
+		);
+
 		if ( empty( $logo['link'] ) ) {
-			return '<div class="coming-soon__logo">' . $img . '</div>';
+			return $open . $img . '</div>';
 		}
 
+		// alt describes the image; the ARIA label names where the link goes.
+		// Different jobs, so they are separate fields, and the label is applied
+		// only when the author filled it in.
+		$aria = ! empty( $logo['aria'] ) ? ' aria-label="' . esc_attr( $logo['aria'] ) . '"' : '';
+
 		return sprintf(
-			'<div class="coming-soon__logo"><a class="coming-soon__logo-link" href="%s"%s>%s</a></div>',
+			'%s<a class="coming-soon__logo-link" href="%s"%s>%s</a></div>',
+			$open,
 			esc_url( $logo['link'] ),
-			'' !== $logo['aria'] ? ' aria-label="' . esc_attr( $logo['aria'] ) . '"' : '',
+			$aria,
 			$img
 		);
 	}
@@ -294,7 +307,7 @@ class MMPCS_Renderer {
 	 * @param array $footer Footer settings.
 	 * @return string
 	 */
-	private static function footer( array $footer ) {
+	private static function footer( array $footer, $logos = '' ) {
 		$parts = array();
 
 		$company = '';
@@ -330,6 +343,8 @@ class MMPCS_Renderer {
 			);
 		}
 
-		return '<footer class="coming-soon__footer">' . implode( '', $parts ) . '</footer>';
+		// Logos sit between the footer's top rule and its text, centered.
+		return '<footer class="coming-soon__footer">' . $logos
+			. '<p class="coming-soon__footer-text">' . implode( '', $parts ) . '</p></footer>';
 	}
 }

@@ -202,36 +202,210 @@
 	}
 
 	/**
-	 * Media library picker for the logo.
+	 * Media library picker.
+	 *
+	 * Delegated from the document rather than bound per button, because logo
+	 * rows are cloned from a template after this runs and a bound-at-init
+	 * handler would never reach them.
 	 */
 	function initMedia() {
 		var frame;
 
-		document.querySelectorAll( '.mmpcs-media-pick' ).forEach( function ( button ) {
-			button.addEventListener( 'click', function ( event ) {
-				event.preventDefault();
+		document.addEventListener( 'click', function ( event ) {
+			var button = event.target.closest( '.mmpcs-media-pick' );
 
-				var input = button.parentNode.querySelector( 'input' );
+			if ( ! button ) {
+				return;
+			}
 
-				if ( ! input ) {
-					return;
+			event.preventDefault();
+
+			var input = button.parentNode.querySelector( 'input' );
+
+			if ( ! input ) {
+				return;
+			}
+
+			frame = window.wp.media( {
+				title: strings.mediaTitle || 'Choose a logo',
+				button: { text: strings.mediaButton || 'Use this image' },
+				library: { type: 'image' },
+				multiple: false
+			} );
+
+			frame.on( 'select', function () {
+				var attachment = frame.state().get( 'selection' ).first().toJSON();
+
+				input.value = attachment.url;
+
+				// The library knows the real dimensions, so use them rather
+				// than loading the file again just to measure it.
+				if ( attachment.width ) {
+					applyNaturalWidth( input, attachment.width );
 				}
 
-				frame = window.wp.media( {
-					title: strings.mediaTitle || 'Choose a logo',
-					button: { text: strings.mediaButton || 'Use this image' },
-					library: { type: 'image' },
-					multiple: false
-				} );
-
-				frame.on( 'select', function () {
-					var attachment = frame.state().get( 'selection' ).first().toJSON();
-					input.value = attachment.url;
-				} );
-
-				frame.open();
+				syncLogoRow( input.closest( '.mmpcs-row--logo' ) );
 			} );
+
+			frame.open();
 		} );
+	}
+
+	/**
+	 * Show an image's natural width as a reference, and adopt it as the width
+	 * when the author has not chosen one yet.
+	 *
+	 * @param {HTMLElement} input   The URL field.
+	 * @param {number}      natural Natural width in pixels.
+	 */
+	function applyNaturalWidth( input, natural ) {
+		var row = input.closest( '.mmpcs-row--logo' );
+
+		if ( ! row || ! natural ) {
+			return;
+		}
+
+		var hint  = row.querySelector( '[data-logo-natural]' );
+		var width = row.querySelector( '[data-logo-width]' );
+
+		if ( hint ) {
+			hint.textContent = ( strings.naturalWidth || 'Original: %s px wide' )
+				.replace( '%s', String( natural ) );
+		}
+
+		// Only ever a starting point: an author's own number is never
+		// overwritten, and the stored range still applies.
+		if ( width && ! width.value ) {
+			width.value = Math.min( 800, Math.max( 40, natural ) );
+		}
+	}
+
+	/**
+	 * Measure a pasted URL, which has no attachment record to ask.
+	 *
+	 * @param {HTMLElement} input The URL field.
+	 */
+	function measurePastedImage( input ) {
+		if ( ! input.value ) {
+			return;
+		}
+
+		var probe = new Image();
+
+		probe.onload = function () {
+			applyNaturalWidth( input, probe.naturalWidth );
+		};
+
+		probe.src = input.value;
+	}
+
+	/**
+	 * Keep a collapsed row's summary telling the truth about its contents.
+	 *
+	 * @param {HTMLElement} row A logo row.
+	 */
+	function syncLogoRow( row ) {
+		if ( ! row ) {
+			return;
+		}
+
+		var url   = row.querySelector( '[data-logo-url]' );
+		var alt   = row.querySelector( '[data-logo-alt]' );
+		var slot  = row.querySelector( '[data-logo-position]' );
+		var thumb = row.querySelector( '[data-logo-thumb]' );
+		var name  = row.querySelector( '[data-logo-name]' );
+		var label = row.querySelector( '[data-logo-slot]' );
+
+		if ( thumb && url ) {
+			thumb.src = url.value;
+			thumb.hidden = ! url.value;
+		}
+
+		if ( name && alt ) {
+			name.textContent = alt.value || strings.untitled || 'Untitled logo';
+		}
+
+		if ( label && slot ) {
+			label.textContent = slot.options[ slot.selectedIndex ].text;
+		}
+	}
+
+	/**
+	 * Reveal an arrangement control only for slots that actually hold more
+	 * than one logo, since arrangement means nothing to a slot holding one.
+	 */
+	function syncLogoLayouts() {
+		var block = document.querySelector( '[data-logo-layouts]' );
+
+		if ( ! block ) {
+			return;
+		}
+
+		var counts = {};
+
+		document.querySelectorAll( '.mmpcs-row--logo' ).forEach( function ( row ) {
+			var url  = row.querySelector( '[data-logo-url]' );
+			var slot = row.querySelector( '[data-logo-position]' );
+
+			if ( ! url || ! slot || ! url.value ) {
+				return;
+			}
+
+			counts[ slot.value ] = ( counts[ slot.value ] || 0 ) + 1;
+		} );
+
+		var anyShared = false;
+
+		block.querySelectorAll( '[data-slot]' ).forEach( function ( control ) {
+			var shared = counts[ control.dataset.slot ] > 1;
+
+			control.hidden = ! shared;
+			anyShared = anyShared || shared;
+		} );
+
+		block.hidden = ! anyShared;
+	}
+
+	/**
+	 * Wire the logo repeater's own behaviour on top of the generic one.
+	 */
+	function initLogos() {
+		var form = document.querySelector( '.mmpcs-form' ) || document;
+
+		form.addEventListener( 'input', function ( event ) {
+			var row = event.target.closest( '.mmpcs-row--logo' );
+
+			if ( ! row ) {
+				return;
+			}
+
+			syncLogoRow( row );
+			syncLogoLayouts();
+		} );
+
+		form.addEventListener( 'change', function ( event ) {
+			var row = event.target.closest( '.mmpcs-row--logo' );
+
+			if ( ! row ) {
+				return;
+			}
+
+			if ( event.target.matches( '[data-logo-url]' ) ) {
+				measurePastedImage( event.target );
+			}
+
+			syncLogoRow( row );
+			syncLogoLayouts();
+		} );
+
+		// Adding or removing a row changes the counts too.
+		form.addEventListener( 'click', function ( event ) {
+			if ( event.target.closest( '.mmpcs-add, .mmpcs-remove, .mmpcs-up, .mmpcs-down' ) ) {
+				window.setTimeout( syncLogoLayouts, 0 );
+			}
+		} );
+
+		syncLogoLayouts();
 	}
 
 	/**
@@ -254,5 +428,6 @@
 		initRanges();
 		initRepeaters();
 		initMedia();
+		initLogos();
 	} );
 }( window.jQuery ) );
