@@ -522,6 +522,46 @@ class MMPCS_Admin {
 					</td>
 				</tr>
 				<tr>
+					<th scope="row"><label for="mmpcs-logo2-url"><?php esc_html_e( 'Secondary logo URL', 'mmp-coming-soon' ); ?></label></th>
+					<td>
+						<div class="mmpcs-media">
+							<input type="url" id="mmpcs-logo2-url" class="regular-text code" name="<?php echo esc_attr( self::name( '[logo_secondary][url]' ) ); ?>" value="<?php echo esc_attr( $s['logo_secondary']['url'] ); ?>">
+							<button type="button" class="button mmpcs-media-pick"><?php esc_html_e( 'Choose image', 'mmp-coming-soon' ); ?></button>
+						</div>
+						<p class="description"><?php esc_html_e( 'An optional second image — a client logo, an accreditation, a partner mark. Leave blank to hide it.', 'mmp-coming-soon' ); ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="mmpcs-logo2-position"><?php esc_html_e( 'Secondary logo position', 'mmp-coming-soon' ); ?></label></th>
+					<td>
+						<select id="mmpcs-logo2-position" name="<?php echo esc_attr( self::name( '[logo_secondary][position]' ) ); ?>">
+							<?php foreach ( MMPCS_Settings::LOGO_POSITIONS as $value => $label ) : ?>
+							<option value="<?php echo esc_attr( $value ); ?>"<?php selected( $s['logo_secondary']['position'], $value ); ?>><?php echo esc_html( $label ); ?></option>
+							<?php endforeach; ?>
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="mmpcs-logo2-alt"><?php esc_html_e( 'Secondary logo alt text', 'mmp-coming-soon' ); ?></label></th>
+					<td>
+						<input type="text" id="mmpcs-logo2-alt" class="regular-text" name="<?php echo esc_attr( self::name( '[logo_secondary][alt]' ) ); ?>" value="<?php echo esc_attr( $s['logo_secondary']['alt'] ); ?>">
+						<p class="description"><?php esc_html_e( 'Also used as the link’s accessible name when a link is set.', 'mmp-coming-soon' ); ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="mmpcs-logo2-link"><?php esc_html_e( 'Secondary logo link URL', 'mmp-coming-soon' ); ?></label></th>
+					<td>
+						<input type="url" id="mmpcs-logo2-link" class="regular-text code" name="<?php echo esc_attr( self::name( '[logo_secondary][link]' ) ); ?>" value="<?php echo esc_attr( $s['logo_secondary']['link'] ); ?>">
+						<p class="description"><?php esc_html_e( 'Leave blank to render the image without a link.', 'mmp-coming-soon' ); ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="mmpcs-logo2-width"><?php esc_html_e( 'Secondary logo width', 'mmp-coming-soon' ); ?></label></th>
+					<td>
+						<input type="number" id="mmpcs-logo2-width" class="small-text" min="40" max="800" step="1" name="<?php echo esc_attr( self::name( '[logo_secondary][width]' ) ); ?>" value="<?php echo esc_attr( $s['logo_secondary']['width'] ); ?>"> px
+					</td>
+				</tr>
+				<tr>
 					<th scope="row"><label for="mmpcs-badge"><?php esc_html_e( 'Badge text', 'mmp-coming-soon' ); ?></label></th>
 					<td>
 						<input type="text" id="mmpcs-badge" class="regular-text" name="<?php echo esc_attr( self::name( '[badge_text]' ) ); ?>" value="<?php echo esc_attr( $s['badge_text'] ); ?>">
@@ -534,7 +574,10 @@ class MMPCS_Admin {
 				</tr>
 				<tr>
 					<th scope="row"><label for="mmpcs-description"><?php esc_html_e( 'Description', 'mmp-coming-soon' ); ?></label></th>
-					<td><textarea id="mmpcs-description" class="large-text" rows="4" name="<?php echo esc_attr( self::name( '[description]' ) ); ?>"><?php echo esc_textarea( $s['description'] ); ?></textarea></td>
+					<td>
+						<textarea id="mmpcs-description" class="large-text" rows="6" name="<?php echo esc_attr( self::name( '[description]' ) ); ?>"><?php echo esc_textarea( $s['description'] ); ?></textarea>
+						<p class="description"><?php esc_html_e( 'Leave a blank line to start a new paragraph. A single line break stays inside the paragraph.', 'mmp-coming-soon' ); ?></p>
+					</td>
 				</tr>
 			</table>
 			<?php self::reset_button( 'content' ); ?>

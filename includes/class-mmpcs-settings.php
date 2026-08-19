@@ -28,13 +28,27 @@ class MMPCS_Settings {
 	);
 
 	/**
+	 * Where the secondary logo may be placed. The key is the element it is
+	 * rendered after; the label is what the settings screen shows.
+	 *
+	 * @var array<string,string>
+	 */
+	const LOGO_POSITIONS = array(
+		'after_logo'        => 'Below the main logo',
+		'after_badge'       => 'Below the badge',
+		'after_heading'     => 'Below the heading',
+		'after_description' => 'Below the description',
+		'after_buttons'     => 'Below the buttons',
+	);
+
+	/**
 	 * Settings grouped by the tab that owns them. Drives the per-section reset
 	 * controls, and defines what a preset or an export file carries.
 	 *
 	 * @var array<string,string[]>
 	 */
 	const SECTIONS = array(
-		'content'    => array( 'logo', 'badge_text', 'heading', 'description' ),
+		'content'    => array( 'logo', 'logo_secondary', 'badge_text', 'heading', 'description' ),
 		'buttons'    => array( 'buttons_main', 'buttons_support' ),
 		'footer'     => array( 'footer' ),
 		'background' => array( 'aurora' ),
@@ -72,6 +86,19 @@ class MMPCS_Settings {
 				'link'  => 'https://memberminderpro.com/',
 				'aria'  => 'Member Minder Pro home page',
 				'width' => 260,
+			),
+
+			/*
+			 * A second, optional image -- a client's own logo sitting under the
+			 * copy while the mascot keeps the top slot. Empty by default, so an
+			 * existing site renders exactly as it did before the upgrade.
+			 */
+			'logo_secondary' => array(
+				'url'      => '',
+				'alt'      => '',
+				'link'     => '',
+				'width'    => 200,
+				'position' => 'after_description',
 			),
 
 			'badge_text'  => 'Website Under Development',
@@ -525,6 +552,18 @@ class MMPCS_Settings {
 			'link'  => isset( $logo['link'] ) ? esc_url_raw( trim( $logo['link'] ) ) : '',
 			'aria'  => isset( $logo['aria'] ) ? sanitize_text_field( $logo['aria'] ) : '',
 			'width' => isset( $logo['width'] ) ? self::clamp_int( $logo['width'], 40, 800, 260 ) : 260,
+		);
+
+		$second   = isset( $input['logo_secondary'] ) && is_array( $input['logo_secondary'] ) ? $input['logo_secondary'] : array();
+		$position = isset( $second['position'] ) ? sanitize_key( $second['position'] ) : 'after_description';
+
+		$out['logo_secondary'] = array(
+			'url'      => isset( $second['url'] ) ? esc_url_raw( trim( $second['url'] ) ) : '',
+			'alt'      => isset( $second['alt'] ) ? sanitize_text_field( $second['alt'] ) : '',
+			'link'     => isset( $second['link'] ) ? esc_url_raw( trim( $second['link'] ) ) : '',
+			'width'    => isset( $second['width'] ) ? self::clamp_int( $second['width'], 40, 800, 200 ) : 200,
+			// An unknown slot falls back rather than rendering nowhere.
+			'position' => isset( self::LOGO_POSITIONS[ $position ] ) ? $position : 'after_description',
 		);
 
 		$out['badge_text']  = isset( $input['badge_text'] ) ? sanitize_text_field( $input['badge_text'] ) : '';
