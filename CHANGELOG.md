@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0-beta.3](https://github.com/memberminderpro/wp-coming-soon/compare/v1.4.0-beta.2...v1.4.0-beta.3) (2026-08-19)
+
+
+### Features
+
+* replace the logo fields with a logo repeater ([#27](https://github.com/memberminderpro/wp-coming-soon/issues/27)) ([5d3cd90](https://github.com/memberminderpro/wp-coming-soon/commit/5d3cd90fea7413526ccb5512edc1aa34ef0f6810))
+
 ## [1.4.0-beta.2](https://github.com/memberminderpro/wp-coming-soon/compare/v1.4.0-beta.1...v1.4.0-beta.2) (2026-08-19)
 
 
