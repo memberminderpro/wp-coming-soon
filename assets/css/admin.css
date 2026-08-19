@@ -705,9 +705,31 @@
 	line-height: 1;
 }
 
-/* Actions sit in a row that may wrap on a narrow column. */
+/*
+ * The buttons get their own flex box inside the cell. Putting display: flex on
+ * the cell itself overrode display: table-cell, which took both the header and
+ * the body cell out of the table layout -- the column stopped being sized with
+ * the others, so the header rule ran short and the third button wrapped.
+ */
 .mmpcs-presets-actions {
+	white-space: nowrap;
+}
+
+/*
+ * nowrap on purpose. A wrapping box is content that fits any width, so the
+ * table hands the column the little it asks for and the third button drops to
+ * its own line; refusing to wrap makes the column's min-content width the width
+ * of all three, and the table sizes it properly. The narrow-column rule below
+ * is where wrapping is actually wanted.
+ */
+.mmpcs-actions {
 	display: flex;
-	flex-wrap: wrap;
+	flex-wrap: nowrap;
 	gap: 0.35rem;
+}
+
+@container mmpcs-settings (max-width: 46rem) {
+	.mmpcs-actions {
+		flex-wrap: wrap;
+	}
 }

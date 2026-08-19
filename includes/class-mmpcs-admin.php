@@ -378,6 +378,7 @@ class MMPCS_Admin {
 								?>
 							</td>
 							<td class="mmpcs-presets-actions">
+								<div class="mmpcs-actions">
 								<button type="submit" form="mmpcs-preset-apply-form" name="preset_name"
 									value="<?php echo esc_attr( $preset['name'] ); ?>" class="button button-secondary mmpcs-button--icon"
 									data-confirm="<?php esc_attr_e( 'Apply this preset over your current settings? You will be able to undo this.', 'mmp-coming-soon' ); ?>">
@@ -395,6 +396,7 @@ class MMPCS_Admin {
 									<span class="dashicons dashicons-trash" aria-hidden="true"></span>
 									<?php esc_html_e( 'Delete', 'mmp-coming-soon' ); ?>
 								</button>
+								</div>
 							</td>
 						</tr>
 					<?php endforeach; ?>
@@ -409,7 +411,7 @@ class MMPCS_Admin {
 					<td>
 						<button type="submit" form="mmpcs-export-form" class="button button-secondary mmpcs-button--icon">
 							<span class="dashicons dashicons-download" aria-hidden="true"></span>
-							<?php esc_html_e( 'Download settings as JSON', 'mmp-coming-soon' ); ?>
+							<?php esc_html_e( 'Download current settings as JSON', 'mmp-coming-soon' ); ?>
 						</button>
 						<p class="description"><?php esc_html_e( 'Keep it as a file, put it in version control, or import it on another site.', 'mmp-coming-soon' ); ?></p>
 					</td>
