@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.1
+
+### Bug Fixes
+
+* never refresh the update manifest during a front-end request. `site_transient_update_plugins` can be read on the front end, and a cold cache put a blocking ten-second call to GitHub in the middle of a visitor's page load.
+
 ## 1.1.0
 
 ### Features
