@@ -4,7 +4,7 @@
  * Plugin URI:        https://memberminderpro.com/
  * Description:       A self-contained coming soon page with an animated aurora background. Replaces the front end for anonymous visitors while the site is being built. No theme, plugin, or framework dependencies.
  * x-release-please-start-version
- * Version:           1.2.0
+ * Version:           1.3.0-beta
  * x-release-please-end
  * Requires at least: 6.0
  * Requires PHP:      7.4
@@ -21,7 +21,7 @@
 defined( 'ABSPATH' ) || exit;
 
 // x-release-please-start-version
-define( 'MMPCS_VERSION', '1.2.0' );
+define( 'MMPCS_VERSION', '1.3.0-beta' );
 // x-release-please-end
 define( 'MMPCS_FILE', __FILE__ );
 define( 'MMPCS_DIR', plugin_dir_path( __FILE__ ) );
@@ -64,6 +64,7 @@ require_once MMPCS_DIR . 'includes/class-mmpcs-adminbar.php';
 
 if ( is_admin() ) {
 	require_once MMPCS_DIR . 'includes/class-mmpcs-admin.php';
+	require_once MMPCS_DIR . 'includes/class-mmpcs-tools.php';
 }
 
 /**
@@ -78,6 +79,7 @@ function mmpcs_bootstrap() {
 
 	if ( is_admin() ) {
 		MMPCS_Admin::init();
+		MMPCS_Tools::init();
 	}
 }
 add_action( 'plugins_loaded', 'mmpcs_bootstrap' );

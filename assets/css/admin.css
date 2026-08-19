@@ -194,3 +194,53 @@
 	margin-left: 0.5rem;
 	color: #007017;
 }
+
+/* The action forms the panel buttons submit through. */
+.mmpcs-tool-form {
+	display: none;
+}
+
+.mmpcs-reset {
+	margin-top: 1.5rem;
+	padding-top: 1rem;
+	border-top: 1px solid #dcdcde;
+}
+
+.mmpcs-reset-button {
+	color: #b32d2e;
+	cursor: pointer;
+}
+
+.mmpcs-reset-button:hover {
+	color: #8a2424;
+}
+
+.mmpcs-undo {
+	border-left-color: #72aee6;
+}
+
+.mmpcs-undo p {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+}
+
+.mmpcs-undo-when {
+	color: #646970;
+}
+
+.mmpcs-presets {
+	max-width: 60rem;
+	margin-bottom: 1rem;
+}
+
+.mmpcs-presets-actions {
+	width: 14rem;
+}
+
+.mmpcs-presets-actions .button-link-delete {
+	margin-left: 0.75rem;
+	color: #b32d2e;
+	cursor: pointer;
+}
