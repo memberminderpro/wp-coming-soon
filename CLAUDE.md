@@ -45,7 +45,7 @@ instances and no autoloader.
 
 | Class | Role |
 | --- | --- |
-| `MMPCS_Settings` | Schema, defaults, merged read with a runtime cache, and every sanitiser. Also owns presets, the one-slot undo, and per-section reset. |
+| `MMPCS_Settings` | Schema, defaults, merged read with a runtime cache, and every sanitiser. Also owns presets, the one-slot undo, per-section reset, and the legacy-shape migrations. |
 | `MMPCS_Frontend` | The gate. Hooks `template_redirect` at priority 0, decides whether to serve the page. |
 | `MMPCS_Renderer` | Emits the complete HTML document and `exit`s. |
 | `MMPCS_Aurora` | Builds the animated blob markup and its per-blob custom properties. |
@@ -53,12 +53,21 @@ instances and no autoloader.
 | `MMPCS_Admin` | The one options form (six client-side tabs, one save, one sanitise callback). |
 | `MMPCS_Tools` | Reset/undo/preset/export/import, each its own `admin_post_mmpcs_*` endpoint with its own nonce. |
 | `MMPCS_Admin_Bar` | Always-visible on/off indicator; loads on front end too, which is why `MMPCS_MENU_SLUG` is a global constant rather than a class const. |
+| `MMPCS_Preview` | `admin-post` endpoint that renders unsaved posted settings through the ordinary sanitiser and renderer, without saving. Feeds the live preview pane. |
 
 ### Invariants that must not be broken
 
 These are load-bearing; each has a failure mode that is not obvious from the code
 alone.
 
+* **Logos and buttons are repeaters with migrations.** `logos` replaced a fixed
+  primary/secondary pair, and buttons gained a `name` distinct from their
+  optional visible `label`. `migrate_legacy_logos()` and
+  `migrate_legacy_buttons()` run on read and on import, are idempotent, and
+  write nothing; old keys simply stop being persisted at the next save.
+* **A button's accessible name must contain its visible text.** WCAG 2.5.3: a
+  name that replaces the visible label makes the control unreachable by voice.
+  The renderer drops a clashing name rather than emitting it.
 * **One option row.** Everything — settings, presets, undo snapshot — lives in
   `mmpcs_settings`. No pages, posts, tables, uploads, user meta, or cron events.
   That is what lets `uninstall.php` remove every trace. Anything a future version
@@ -75,6 +84,41 @@ alone.
   or `develop` would mean a develop→main merge briefly advertised a beta build to
   stable sites. Each manifest also names its own channel and the plugin ignores a
   mismatched one.
+
+### Traps that have already cost a day
+
+Each of these was a real bug, not a hypothetical.
+
+* **`sanitize()` runs on every write, not just form submissions.**
+  `register_setting()` hooks it to `sanitize_option_mmpcs_settings`, so
+  `update_option()` calls it again on whatever `write()` just built. Anything
+  `sanitize()` reconstructs from `get_option()` is therefore reading the
+  pre-write value. That silently destroyed every preset and undo snapshot at the
+  moment it was saved. Values present in the input must win; the stored copy is
+  only a fallback.
+* **A class that sets `display` beats `[hidden]`.** `.mmpcs-field { display: flex }`
+  outranks the browser's `[hidden] { display: none }`, so hiding a field with the
+  attribute did nothing while the toggles reported themselves as off. There is
+  now one `[hidden] { display: none !important }` rule in `admin.css`; keep it.
+* **`display: flex` on a `<td>` or `<th>` stops it being a table cell.** The
+  column drops out of the table's sizing, which shortens header rules and makes
+  buttons wrap. Put the flex box *inside* the cell.
+* **Settings rows size against the settings column, not the viewport.** The
+  preview pane takes half a wide screen, so a media query sees "wide" while the
+  fields are cramped. `.mmpcs-form` is a CSS container and the rows use
+  `@container mmpcs-settings`.
+* **Row order is display order.** Repeaters store no weight; moving a row moves
+  it on the page. Do not add a sort field.
+
+### Verifying admin UI
+
+Reasoning about CSS has repeatedly shipped bugs here. Render the real markup and
+look at it: stub the WordPress functions, `eval()` the private method out of
+`class-mmpcs-admin.php`, write the output into a page that loads the actual
+`admin.css` and `admin.js`, serve it over `http://127.0.0.1`, and drive it in a
+browser. Measure geometry (`getBoundingClientRect()`), do not eyeball it. This
+catches clipped controls, source-order specificity losses, and layout that only
+misbehaves at a particular column width.
 
 ## Versioning and releases
 
@@ -97,3 +141,14 @@ After every stable release, one PR off `develop` must (1) merge `main` back into
 `develop` and (2) baseline `.release-please-manifest.prerelease.json` on the
 released version — otherwise the beta line starts trailing stable. See
 CONTRIBUTING.md → "After every stable release".
+
+**Do that sync as a real merge, never a squash.** PR #21 was squashed, so `main`
+is not an ancestor of `develop`: release-please could not find the `v1.3.0`
+boundary, walked back through the whole history, and cut a `1.4.0-beta` that
+contained no new feature. Until a genuine merge repairs the ancestry, expect the
+same phantom bump after the next stable release.
+
+Beta manifests are served from `raw.githubusercontent.com`, which is Fastly-
+fronted with a five-minute TTL and normalises away the cache-busting query
+string. A freshly published beta takes a few minutes to become visible however
+hard anyone presses the update button.
