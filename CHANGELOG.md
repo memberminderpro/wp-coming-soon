@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0-beta.10](https://github.com/memberminderpro/wp-coming-soon/compare/v1.4.0-beta.9...v1.4.0-beta.10) (2026-08-19)
+
+
+### Bug Fixes
+
+* stop discarding presets and the undo slot as they are saved ([#41](https://github.com/memberminderpro/wp-coming-soon/issues/41)) ([17bd54a](https://github.com/memberminderpro/wp-coming-soon/commit/17bd54a01b81fd6f5fffde54097e7360111f19e3))
+
 ## [1.4.0-beta.9](https://github.com/memberminderpro/wp-coming-soon/compare/v1.4.0-beta.8...v1.4.0-beta.9) (2026-08-19)
 
 
