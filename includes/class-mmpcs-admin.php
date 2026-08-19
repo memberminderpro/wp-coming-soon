@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
  */
 class MMPCS_Admin {
 
-	const MENU_SLUG   = 'mmp-coming-soon';
+	const MENU_SLUG   = MMPCS_MENU_SLUG;
 	const OPTION_PAGE = 'mmpcs_options';
 
 	/**

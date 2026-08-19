@@ -29,6 +29,12 @@ define( 'MMPCS_URL', plugin_dir_url( __FILE__ ) );
 define( 'MMPCS_OPTION', 'mmpcs_settings' );
 
 /**
+ * The options page slug. Defined here rather than on MMPCS_Admin because the
+ * admin bar renders on the front end too, where that class is not loaded.
+ */
+define( 'MMPCS_MENU_SLUG', 'mmp-coming-soon' );
+
+/**
  * Where update checks look. {channel} becomes "stable" or "beta".
  *
  * Manifests live on a dedicated "manifests" branch that main and develop never
