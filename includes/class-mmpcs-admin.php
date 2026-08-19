@@ -174,8 +174,8 @@ class MMPCS_Admin {
 
 			<p class="mmpcs-lede">
 				<?php esc_html_e( 'A self-contained holding page for visitors who are not signed in. Everything on it is configured here.', 'mmp-coming-soon' ); ?>
-				<a class="button button-secondary" href="<?php echo esc_url( $preview_url ); ?>" target="_blank" rel="noopener">
-					<?php esc_html_e( 'Preview page', 'mmp-coming-soon' ); ?>
+				<a class="button button-secondary" href="<?php echo esc_url( $preview_url ); ?>" target="_blank" rel="noopener" data-preview-popout>
+					<?php esc_html_e( 'Preview window', 'mmp-coming-soon' ); ?>
 				</a>
 			</p>
 
@@ -902,45 +902,69 @@ class MMPCS_Admin {
 				<input type="text" data-button-name name="<?php echo esc_attr( $field_base ); ?>[<?php echo $is_button ? 'name' : 'label'; ?>]" value="<?php echo esc_attr( $is_button ? $name : $label ); ?>">
 			</label>
 			<?php if ( $is_button ) : ?>
-			<span class="mmpcs-chips">
-				<button
-					type="button"
-					class="mmpcs-chip"
-					data-toggle-field="label"
-					aria-pressed="<?php echo $has_label ? 'true' : 'false'; ?>"
-					<?php echo $has_image ? 'hidden' : ''; ?>
-					title="<?php esc_attr_e( 'Show different text on the button', 'mmp-coming-soon' ); ?>"
-					aria-label="<?php esc_attr_e( 'Show different text on the button', 'mmp-coming-soon' ); ?>">
-					<span class="dashicons dashicons-editor-textcolor" aria-hidden="true"></span>
-				</button>
-				<button
-					type="button"
-					class="mmpcs-chip"
-					data-toggle-field="image"
-					aria-pressed="<?php echo $has_image ? 'true' : 'false'; ?>"
-					title="<?php esc_attr_e( 'Use an image instead of text', 'mmp-coming-soon' ); ?>"
-					aria-label="<?php esc_attr_e( 'Use an image instead of text', 'mmp-coming-soon' ); ?>">
-					<span class="dashicons dashicons-format-image" aria-hidden="true"></span>
-				</button>
+			<?php
+			/*
+			 * The mode is never stored. An image is what makes a button an
+			 * image button, so the mode can always be read back off the values
+			 * themselves -- which means no migration, and no way for a stored
+			 * mode to disagree with what is actually set.
+			 */
+			$mode = $has_image ? 'image' : ( $has_label ? 'text' : 'name' );
+
+			$modes = array(
+				'name'  => array(
+					'label' => __( 'Name', 'mmp-coming-soon' ),
+					'icon'  => 'dashicons-editor-textcolor',
+					'hint'  => __( 'The button shows its name', 'mmp-coming-soon' ),
+				),
+				'text'  => array(
+					'label' => __( 'Text', 'mmp-coming-soon' ),
+					'icon'  => 'dashicons-edit',
+					'hint'  => __( 'The button shows different text', 'mmp-coming-soon' ),
+				),
+				'image' => array(
+					'label' => __( 'Image', 'mmp-coming-soon' ),
+					'icon'  => 'dashicons-format-image',
+					'hint'  => __( 'The button shows an image', 'mmp-coming-soon' ),
+				),
+			);
+			?>
+			<span class="mmpcs-field mmpcs-field--seg">
+				<span id="mmpcs-seg-<?php echo esc_attr( $index ); ?>"><?php esc_html_e( 'Shows', 'mmp-coming-soon' ); ?></span>
+				<span class="mmpcs-seg" role="radiogroup" aria-labelledby="mmpcs-seg-<?php echo esc_attr( $index ); ?>" data-button-mode>
+					<?php foreach ( $modes as $value => $meta ) : ?>
+					<button
+						type="button"
+						role="radio"
+						class="mmpcs-seg__option"
+						data-mode="<?php echo esc_attr( $value ); ?>"
+						aria-checked="<?php echo $mode === $value ? 'true' : 'false'; ?>"
+						tabindex="<?php echo $mode === $value ? '0' : '-1'; ?>"
+						title="<?php echo esc_attr( $meta['hint'] ); ?>">
+						<span class="dashicons <?php echo esc_attr( $meta['icon'] ); ?>" aria-hidden="true"></span>
+						<span><?php echo esc_html( $meta['label'] ); ?></span>
+					</button>
+					<?php endforeach; ?>
+				</span>
 			</span>
-			<?php endif; ?>
-			<label class="mmpcs-field mmpcs-field--wide">
-				<span><?php esc_html_e( 'Link', 'mmp-coming-soon' ); ?></span>
-				<input type="url" class="code" name="<?php echo esc_attr( $field_base ); ?>[url]" value="<?php echo esc_attr( $url ); ?>">
-			</label>
-			<?php if ( $is_button ) : ?>
-			<label class="mmpcs-field" data-field="label"<?php echo $has_label && ! $has_image ? '' : ' hidden'; ?>>
+			<label class="mmpcs-field" data-field="text"<?php echo 'text' === $mode ? '' : ' hidden'; ?>>
 				<span><?php esc_html_e( 'Button text', 'mmp-coming-soon' ); ?></span>
 				<input type="text" data-button-label name="<?php echo esc_attr( $field_base ); ?>[label]" value="<?php echo esc_attr( $label ); ?>">
 			</label>
-			<label class="mmpcs-field mmpcs-field--wide" data-field="image"<?php echo $has_image ? '' : ' hidden'; ?>>
+			<label class="mmpcs-field mmpcs-field--wide" data-field="image"<?php echo 'image' === $mode ? '' : ' hidden'; ?>>
 				<span><?php esc_html_e( 'Image', 'mmp-coming-soon' ); ?></span>
 				<span class="mmpcs-media">
 					<input type="url" class="code" data-button-image name="<?php echo esc_attr( $field_base ); ?>[image]" value="<?php echo esc_attr( $image ); ?>">
 					<button type="button" class="button mmpcs-media-pick"><?php esc_html_e( 'Choose image', 'mmp-coming-soon' ); ?></button>
 				</span>
 			</label>
-			<label class="mmpcs-field mmpcs-field--narrow" data-field="style"<?php echo $has_image ? ' hidden' : ''; ?>>
+			<?php endif; ?>
+			<label class="mmpcs-field mmpcs-field--wide">
+				<span><?php esc_html_e( 'Link', 'mmp-coming-soon' ); ?></span>
+				<input type="url" class="code" name="<?php echo esc_attr( $field_base ); ?>[url]" value="<?php echo esc_attr( $url ); ?>">
+			</label>
+			<?php if ( $is_button ) : ?>
+			<label class="mmpcs-field mmpcs-field--narrow" data-field="style"<?php echo 'image' === $mode ? ' hidden' : ''; ?>>
 				<span><?php esc_html_e( 'Style', 'mmp-coming-soon' ); ?></span>
 				<select name="<?php echo esc_attr( $field_base ); ?>[style]">
 					<?php foreach ( MMPCS_Settings::BUTTON_STYLES as $value => $style_label ) : ?>

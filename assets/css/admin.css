@@ -115,51 +115,78 @@
 }
 
 /*
- * The two icon toggles beside a button's name. Real buttons carrying
- * aria-pressed, not decorative icons, so their state is perceivable without
- * seeing them -- and large enough to be a comfortable target.
+ * What the button shows: name, different text, or an image. A radiogroup
+ * rather than two independent toggles, because the three are exclusive and a
+ * segmented control says so at a glance -- picking one visibly releases the
+ * others, where two on/off icons only imply it.
  */
-.mmpcs-chips {
-	display: inline-flex;
-	align-items: center;
-	gap: 0.25rem;
-	padding-bottom: 0.35rem;
+/*
+ * Sized to its contents, never to a column width. Sitting in a fixed-width
+ * field is what clipped the third segment clean off behind overflow: hidden --
+ * the control read as two options plus a blue sliver.
+ */
+/*
+ * Compound selector on purpose. This block sits above .mmpcs-field in the
+ * file, so a single-class rule would lose to it on order alone and the control
+ * would be stretched to a column width again.
+ */
+.mmpcs-field.mmpcs-field--seg {
+	flex: 0 0 auto;
+	align-items: flex-start;
 }
 
-.mmpcs-chip {
+.mmpcs-seg {
 	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	width: 2rem;
-	height: 2rem;
-	padding: 0;
+	align-items: stretch;
+	flex-shrink: 0;
 	border: 1px solid #dcdcde;
 	border-radius: 4px;
 	background: #fff;
-	color: #50575e;
-	cursor: pointer;
-	transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+	overflow: hidden;
 }
 
-.mmpcs-chip:hover {
-	border-color: #8c8f94;
+.mmpcs-seg__option {
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
+	gap: 0.25rem;
+	white-space: nowrap;
+	padding: 0.3rem 0.6rem;
+	border: 0;
+	border-inline-start: 1px solid #dcdcde;
+	background: transparent;
+	color: #50575e;
+	font-size: 0.8rem;
+	line-height: 1.6;
+	cursor: pointer;
+	transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.mmpcs-seg__option:first-child {
+	border-inline-start: 0;
+}
+
+.mmpcs-seg__option:hover {
+	background: #f0f0f1;
 	color: #1d2327;
 }
 
-.mmpcs-chip:focus-visible {
+.mmpcs-seg__option:focus-visible {
 	outline: 2px solid #2271b1;
-	outline-offset: 1px;
+	outline-offset: -2px;
 }
 
-/* Pressed is carried by colour and fill, never by colour alone. */
-.mmpcs-chip[aria-pressed="true"] {
-	border-color: #2271b1;
+/* Selection is carried by fill and weight, never by colour alone. */
+.mmpcs-seg__option[aria-checked="true"] {
 	background: #2271b1;
 	color: #fff;
+	font-weight: 600;
 }
 
-.mmpcs-chip[aria-pressed="true"]::after {
-	content: "";
+.mmpcs-seg__option .dashicons {
+	font-size: 1rem;
+	width: 1rem;
+	height: 1rem;
 }
 
 .mmpcs-announce {
@@ -545,14 +572,16 @@
 		flex: 1 1 auto;
 	}
 
-	.mmpcs-chips {
+	.mmpcs-seg {
 		align-self: flex-start;
-		padding-bottom: 0;
 	}
 
 	.mmpcs-move {
 		display: flex;
 		gap: 0.5rem;
+		/* Stretching a pair of arrows across the row makes them look like
+		   rules rather than buttons. */
+		align-self: flex-start;
 		margin-left: 0;
 	}
 }

@@ -374,63 +374,135 @@
 		block.hidden = ! anyShared;
 	}
 
+	var MODES = [ 'name', 'text', 'image' ];
+
 	/**
-	 * Reconcile one button row: which fields are shown, which toggles are
-	 * pressed, and what a screen reader would announce.
+	 * Which mode a row is in, read from its values.
 	 *
-	 * @param {HTMLElement} row A repeater row.
+	 * Nothing stores the mode: an image is what makes a button an image button,
+	 * so the values are the truth and cannot drift from a stored flag.
+	 *
+	 * @param {HTMLElement} row A button row.
+	 * @return {string} One of MODES.
 	 */
-	function syncButtonRow( row ) {
+	function buttonMode( row ) {
+		var image = row.querySelector( '[data-button-image]' );
+		var label = row.querySelector( '[data-button-label]' );
+
+		if ( image && image.value.trim() ) {
+			return 'image';
+		}
+
+		if ( label && label.value.trim() ) {
+			return 'text';
+		}
+
+		return 'name';
+	}
+
+	/**
+	 * Put a row into a mode.
+	 *
+	 * The modes are exclusive, so entering one empties the field belonging to
+	 * the other -- otherwise a hidden image would still be what the page
+	 * rendered. What was typed is kept on the element, so going back restores
+	 * it for as long as the page is open.
+	 *
+	 * @param {HTMLElement} row  A button row.
+	 * @param {string}      mode One of MODES.
+	 */
+	function setButtonMode( row, mode ) {
+		var label = row.querySelector( '[data-button-label]' );
+		var image = row.querySelector( '[data-button-image]' );
+
+		[ [ label, 'text' ], [ image, 'image' ] ].forEach( function ( pair ) {
+			var input = pair[0];
+			var owner = pair[1];
+
+			if ( ! input ) {
+				return;
+			}
+
+			if ( mode === owner ) {
+				if ( ! input.value && input.dataset.stashed ) {
+					input.value = input.dataset.stashed;
+				}
+
+				return;
+			}
+
+			if ( input.value ) {
+				input.dataset.stashed = input.value;
+			}
+
+			input.value = '';
+		} );
+
+		syncButtonRow( row, mode );
+
+		// Land the caret where the work is.
+		var focusTarget = row.querySelector( '[data-field="' + mode + '"] input' );
+
+		if ( focusTarget ) {
+			focusTarget.focus();
+		}
+	}
+
+	/**
+	 * Reconcile one button row with its mode: which fields show, which segment
+	 * is checked, and what a screen reader would announce.
+	 *
+	 * @param {HTMLElement} row     A button row.
+	 * @param {string}      [force] Mode to apply, when it cannot be read back
+	 *                              off the values yet -- choosing Image before
+	 *                              an image has been picked, for instance.
+	 */
+	function syncButtonRow( row, force ) {
 		if ( ! row ) {
 			return;
 		}
 
-		var nameField  = row.querySelector( '[data-button-name]' );
-		var labelField = row.querySelector( '[data-button-label]' );
-		var imageField = row.querySelector( '[data-button-image]' );
+		var group = row.querySelector( '[data-button-mode]' );
 
-		if ( ! nameField || ! imageField ) {
+		if ( ! group ) {
 			return;
 		}
 
-		var name     = nameField.value.trim();
-		var label    = labelField ? labelField.value.trim() : '';
-		var image    = imageField.value.trim();
-		var hasImage = '' !== image;
+		var mode = force || row.dataset.mode || buttonMode( row );
 
-		var labelWrap = row.querySelector( '[data-field="label"]' );
-		var imageWrap = row.querySelector( '[data-field="image"]' );
-		var styleWrap = row.querySelector( '[data-field="style"]' );
-		var labelChip = row.querySelector( '[data-toggle-field="label"]' );
-		var imageChip = row.querySelector( '[data-toggle-field="image"]' );
+		row.dataset.mode = mode;
 
-		/*
-		 * An image is the button, so a style variant and separate button text
-		 * have nothing to act on. Their fields are hidden rather than cleared:
-		 * pulling the image back out should give you your text back.
-		 */
-		if ( imageWrap ) {
-			imageWrap.hidden = ! hasImage;
+		MODES.forEach( function ( name ) {
+			var wrap = row.querySelector( '[data-field="' + name + '"]' );
+
+			if ( wrap ) {
+				wrap.hidden = name !== mode;
+			}
+		} );
+
+		var style = row.querySelector( '[data-field="style"]' );
+
+		if ( style ) {
+			// An image is the button, so a style variant has nothing to act on.
+			style.hidden = 'image' === mode;
 		}
 
-		if ( styleWrap ) {
-			styleWrap.hidden = hasImage;
-		}
+		group.querySelectorAll( '[data-mode]' ).forEach( function ( option ) {
+			var on = option.dataset.mode === mode;
 
-		if ( labelChip ) {
-			labelChip.hidden = hasImage;
-			labelChip.setAttribute( 'aria-pressed', ( ! hasImage && labelWrap && ! labelWrap.hidden ) ? 'true' : 'false' );
-		}
+			option.setAttribute( 'aria-checked', on ? 'true' : 'false' );
+			option.tabIndex = on ? 0 : -1;
+		} );
 
-		if ( imageChip ) {
-			imageChip.setAttribute( 'aria-pressed', hasImage ? 'true' : 'false' );
-		}
+		var nameField  = row.querySelector( '[data-button-name]' );
+		var labelField = row.querySelector( '[data-button-label]' );
 
-		if ( labelWrap && hasImage ) {
-			labelWrap.hidden = true;
-		}
-
-		announceButton( row, name, label, hasImage );
+		announceButton(
+			row,
+			nameField ? nameField.value.trim() : '',
+			labelField ? labelField.value.trim() : '',
+			'image' === mode
+		);
 	}
 
 	/**
@@ -439,12 +511,12 @@
 	 * The rule is WCAG 2.5.3: where text is visible, the accessible name has to
 	 * contain it, or someone using voice control cannot activate what they can
 	 * see. The renderer enforces that; this explains it at the moment the
-	 * mismatch is created rather than leaving it to be discovered.
+	 * mismatch is created rather than leaving it to be found by an audit.
 	 *
 	 * @param {HTMLElement} row      The row.
 	 * @param {string}      name     The name field.
 	 * @param {string}      label    The optional button text.
-	 * @param {boolean}     hasImage Whether an image is set.
+	 * @param {boolean}     hasImage Whether the row is in image mode.
 	 */
 	function announceButton( row, name, label, hasImage ) {
 		var out = row.querySelector( '[data-button-announce]' );
@@ -456,9 +528,8 @@
 		out.classList.remove( 'is-warning' );
 
 		/*
-		 * With no image and no separate text, the button says its own name and
-		 * the line would only ever repeat the field above it. Silence is the
-		 * better default; the line appears when the two can disagree.
+		 * With no image and no separate text the button says its own name, and
+		 * the line would only repeat the field above it.
 		 */
 		if ( ! name || ( ! hasImage && ! label ) ) {
 			out.textContent = '';
@@ -477,12 +548,6 @@
 
 		var contained = name.toLowerCase().indexOf( label.toLowerCase() ) !== -1;
 
-		if ( contained && name.toLowerCase() !== label.toLowerCase() ) {
-			out.textContent = ( strings.announced || '%s' ).replace( '%s', name );
-
-			return;
-		}
-
 		if ( ! contained ) {
 			out.classList.add( 'is-warning' );
 			out.textContent = ( strings.announced || '%s' ).replace( '%s', label ) +
@@ -491,73 +556,77 @@
 			return;
 		}
 
-		out.textContent = ( strings.announced || '%s' ).replace( '%s', label );
+		out.textContent = ( strings.announced || '%s' ).replace( '%s', name );
 	}
 
 	/**
-	 * Show or hide one of a row's optional fields.
-	 *
-	 * Turning a field off clears it, because a hidden field that still changed
-	 * the page would be a thing to hunt for. The value is kept on the element
-	 * so turning it straight back on restores what was typed.
-	 *
-	 * @param {HTMLElement} chip The toggle pressed.
-	 */
-	function toggleButtonField( chip ) {
-		var row   = chip.closest( '.mmpcs-row' );
-		var which = chip.dataset.toggleField;
-		var wrap  = row.querySelector( '[data-field="' + which + '"]' );
-
-		if ( ! wrap ) {
-			return;
-		}
-
-		var input = wrap.querySelector( 'input' );
-		var show  = wrap.hidden;
-
-		wrap.hidden = ! show;
-
-		if ( input ) {
-			if ( show ) {
-				input.value = input.dataset.stashed || input.value;
-				input.focus();
-			} else {
-				input.dataset.stashed = input.value;
-				input.value = '';
-			}
-		}
-
-		syncButtonRow( row );
-	}
-
-	/**
-	 * Button rows: the two toggles, and everything they imply.
+	 * Button rows: the mode control, and everything it implies.
 	 */
 	function initButtons() {
 		var form = document.querySelector( '.mmpcs-form' ) || document;
 
 		form.addEventListener( 'click', function ( event ) {
-			var chip = event.target.closest( '[data-toggle-field]' );
+			var option = event.target.closest( '[data-mode]' );
 
-			if ( chip ) {
-				event.preventDefault();
-				toggleButtonField( chip );
+			if ( ! option ) {
+				return;
 			}
+
+			event.preventDefault();
+			setButtonMode( option.closest( '.mmpcs-row' ), option.dataset.mode );
+		} );
+
+		// A radiogroup is expected to move between its options with the arrow
+		// keys, with only the checked one in the tab order.
+		form.addEventListener( 'keydown', function ( event ) {
+			var option = event.target.closest( '[data-mode]' );
+
+			if ( ! option ) {
+				return;
+			}
+
+			var keys = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 };
+
+			if ( ! ( event.key in keys ) ) {
+				return;
+			}
+
+			event.preventDefault();
+
+			var row  = option.closest( '.mmpcs-row' );
+			var next = MODES.indexOf( option.dataset.mode ) + keys[ event.key ];
+
+			if ( next < 0 ) {
+				next = MODES.length - 1;
+			} else if ( next >= MODES.length ) {
+				next = 0;
+			}
+
+			setButtonMode( row, MODES[ next ] );
+			row.querySelector( '[data-mode="' + MODES[ next ] + '"]' ).focus();
 		} );
 
 		form.addEventListener( 'input', function ( event ) {
-			if ( event.target.closest( '.mmpcs-row' ) ) {
-				syncButtonRow( event.target.closest( '.mmpcs-row' ) );
+			var row = event.target.closest( '.mmpcs-row' );
+
+			if ( row ) {
+				syncButtonRow( row, row.dataset.mode );
 			}
 		} );
 
 		// Choosing from the media library sets a value in script, which fires
 		// no input event of its own.
 		form.addEventListener( 'change', function ( event ) {
-			syncButtonRow( event.target.closest( '.mmpcs-row' ) );
+			var row = event.target.closest( '.mmpcs-row' );
+
+			if ( row ) {
+				syncButtonRow( row, row.dataset.mode );
+			}
 		} );
 
-		document.querySelectorAll( '.mmpcs-row' ).forEach( syncButtonRow );
+		document.querySelectorAll( '.mmpcs-row' ).forEach( function ( row ) {
+			syncButtonRow( row );
+		} );
 	}
 
 	/**
@@ -852,10 +921,11 @@
 
 		var toggle = pane.querySelector( '[data-preview-toggle]' );
 		var frame  = pane.querySelector( '[data-preview-frame]' );
+		var layout = document.querySelector( '[data-mmpcs-layout]' );
 
 		// Collapsed state is a preference, so it outlives the page.
-		var layout    = document.querySelector( '[data-mmpcs-layout]' );
 		var collapsed = 'false' === window.localStorage.getItem( STORAGE_KEY );
+
 
 		/**
 		 * Reflect the collapsed state on both the pane and the grid around it.
@@ -869,18 +939,73 @@
 			if ( layout ) {
 				layout.classList.toggle( 'is-preview-collapsed', isCollapsed );
 			}
+
+			if ( toggle ) {
+				toggle.setAttribute( 'aria-expanded', isCollapsed ? 'false' : 'true' );
+			}
+		}
+
+		/*
+		 * True only when the pane was collapsed to make room for the popped-out
+		 * window. A pane the author collapsed themselves stays collapsed when
+		 * that window closes -- their choice is not ours to undo.
+		 */
+		var collapsedForPopout = false;
+
+		/**
+		 * Open the preview in its own window, or raise the one already open.
+		 *
+		 * Two triggers share this: the button in the pane, and the one above
+		 * the tabs. Once a window exists, both simply bring it forward, which
+		 * is the useful thing when it is buried behind other windows.
+		 */
+		function popOutPreview() {
+			if ( popout && ! popout.closed ) {
+				popout.focus();
+
+				return;
+			}
+
+			// Blank and named, so the same form post can address it.
+			popout = window.open( '', POPOUT_NAME, 'width=1280,height=860' );
+
+			if ( ! popout ) {
+				return;
+			}
+
+			postPreview( POPOUT_NAME );
+			popout.focus();
+
+			// The preview is in its own window now, so the pane is just taking
+			// up room.
+			if ( ! pane.classList.contains( 'is-collapsed' ) ) {
+				collapsedForPopout = true;
+				applyCollapsed( true );
+			}
+
+			var watch = window.setInterval( function () {
+				if ( popout && ! popout.closed ) {
+					return;
+				}
+
+				window.clearInterval( watch );
+
+				if ( collapsedForPopout ) {
+					collapsedForPopout = false;
+					applyCollapsed( false );
+					fitPreview();
+					schedulePreview();
+				}
+			}, 1000 );
 		}
 
 		applyCollapsed( collapsed );
 
 		if ( toggle ) {
-			toggle.setAttribute( 'aria-expanded', collapsed ? 'false' : 'true' );
-
 			toggle.addEventListener( 'click', function () {
 				var nowCollapsed = ! pane.classList.contains( 'is-collapsed' );
 
 				applyCollapsed( nowCollapsed );
-				toggle.setAttribute( 'aria-expanded', nowCollapsed ? 'false' : 'true' );
 				window.localStorage.setItem( STORAGE_KEY, nowCollapsed ? 'false' : 'true' );
 
 				if ( ! nowCollapsed ) {
@@ -890,20 +1015,17 @@
 			} );
 		}
 
-		var popoutButton = pane.querySelector( '[data-preview-popout]' );
-
-		if ( popoutButton ) {
-			popoutButton.addEventListener( 'click', function () {
-				// Opened blank and named, so the same form post that fills the
-				// iframe can address it. No GET preview URL is involved.
-				popout = window.open( '', POPOUT_NAME, 'width=1280,height=860' );
-
-				if ( popout ) {
-					postPreview( POPOUT_NAME );
-					popout.focus();
-				}
+		/*
+		 * Both live in the page: the one in the pane and the one above the
+		 * tabs. The latter stays a real link to the nonce-gated preview URL, so
+		 * it still does something useful with no JavaScript.
+		 */
+		document.querySelectorAll( '[data-preview-popout]' ).forEach( function ( trigger ) {
+			trigger.addEventListener( 'click', function ( event ) {
+				event.preventDefault();
+				popOutPreview();
 			} );
-		}
+		} );
 
 		if ( frame ) {
 			frame.addEventListener( 'load', function () {
