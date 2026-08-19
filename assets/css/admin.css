@@ -669,3 +669,20 @@
 .mmpcs-preview.is-collapsed [data-preview-popout] {
 	display: none;
 }
+
+/*
+ * Delete is a button, like Apply beside it -- two controls doing comparable
+ * jobs should not be a button and a link. It keeps a destructive colour rather
+ * than a destructive shape, so it still reads as the dangerous one.
+ */
+.mmpcs-button--delete {
+	color: #b32d2e;
+	border-color: #b32d2e;
+}
+
+.mmpcs-button--delete:hover,
+.mmpcs-button--delete:focus {
+	color: #fff;
+	border-color: #b32d2e;
+	background: #b32d2e;
+}

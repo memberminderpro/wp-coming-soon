@@ -1076,6 +1076,31 @@
 	}
 
 	/**
+	 * The import button appears once there is a file to import.
+	 *
+	 * Offering it against an empty field only leads to a round trip that comes
+	 * back saying to choose a file. The server still checks, since the button
+	 * is not the guard -- it is only the invitation.
+	 */
+	function initImportGate() {
+		var file   = document.querySelector( '[data-import-file]' );
+		var submit = document.querySelector( '[data-import-submit]' );
+
+		if ( ! file || ! submit ) {
+			return;
+		}
+
+		function sync() {
+			submit.hidden = ! ( file.files && file.files.length );
+		}
+
+		file.addEventListener( 'change', sync );
+
+		// A reloaded page can arrive with a file still selected.
+		sync();
+	}
+
+	/**
 	 * Confirm anything destructive before it submits.
 	 */
 	function initConfirms() {
@@ -1097,6 +1122,7 @@
 		initMedia();
 		initLogos();
 		initButtons();
+		initImportGate();
 		initPreview();
 	} );
 }( window.jQuery ) );
