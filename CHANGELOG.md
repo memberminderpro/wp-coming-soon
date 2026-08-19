@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0-beta.7](https://github.com/memberminderpro/wp-coming-soon/compare/v1.4.0-beta.6...v1.4.0-beta.7) (2026-08-19)
+
+
+### Bug Fixes
+
+* make the settings screen respond to the space it actually has ([#35](https://github.com/memberminderpro/wp-coming-soon/issues/35)) ([5c2f464](https://github.com/memberminderpro/wp-coming-soon/commit/5c2f4640e44ba417fd1885dcfaf469f42c1e5a61))
+
 ## [1.4.0-beta.6](https://github.com/memberminderpro/wp-coming-soon/compare/v1.4.0-beta.5...v1.4.0-beta.6) (2026-08-19)
 
 
