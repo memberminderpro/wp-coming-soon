@@ -383,7 +383,7 @@ class MMPCS_Admin {
 									<?php esc_html_e( 'Apply', 'mmp-coming-soon' ); ?>
 								</button>
 								<button type="submit" form="mmpcs-preset-delete-form" name="preset_name"
-									value="<?php echo esc_attr( $preset['name'] ); ?>" class="button-link button-link-delete"
+									value="<?php echo esc_attr( $preset['name'] ); ?>" class="button button-secondary mmpcs-button--delete"
 									data-confirm="<?php esc_attr_e( 'Delete this preset? Deleting a preset cannot be undone.', 'mmp-coming-soon' ); ?>">
 									<?php esc_html_e( 'Delete', 'mmp-coming-soon' ); ?>
 								</button>
@@ -408,8 +408,8 @@ class MMPCS_Admin {
 				<tr>
 					<th scope="row"><label for="mmpcs-import-file"><?php esc_html_e( 'Import', 'mmp-coming-soon' ); ?></label></th>
 					<td>
-						<input type="file" id="mmpcs-import-file" name="mmpcs_file" form="mmpcs-import-form" accept="application/json,.json">
-						<button type="submit" form="mmpcs-import-form" class="button button-secondary"
+						<input type="file" id="mmpcs-import-file" name="mmpcs_file" form="mmpcs-import-form" accept="application/json,.json" data-import-file>
+						<button type="submit" form="mmpcs-import-form" class="button button-secondary" data-import-submit hidden
 							data-confirm="<?php esc_attr_e( 'Import this file over your current settings? You will be able to undo this.', 'mmp-coming-soon' ); ?>">
 							<?php esc_html_e( 'Import', 'mmp-coming-soon' ); ?>
 						</button>
