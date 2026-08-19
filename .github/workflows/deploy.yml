@@ -1,0 +1,90 @@
+name: Deploy Release to Customer Sites
+
+# THE go-button. Run manually from the Actions tab against a STABLE tag whose
+# release.yml build has completed.
+#
+# For this plugin, "deploying" means publishing manifests/stable.json. That file
+# is what every installed copy polls, so writing it is the moment a release
+# reaches customers. Until this runs, a stable release exists on GitHub but no
+# customer site knows about it.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Stable release tag to deploy (e.g. v1.2.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy-stable-manifest
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Publish the stable manifest
+    runs-on: ubuntu-latest
+    env:
+      DEPLOY_TAG: ${{ inputs.tag }}
+    steps:
+      - name: Validate the tag input
+        run: |
+          set -euo pipefail
+          if ! printf '%s' "$DEPLOY_TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::Refusing to deploy '${DEPLOY_TAG}': only plain stable tags (vX.Y.Z) may be published to customers."
+            exit 1
+          fi
+          echo "Deploying ${DEPLOY_TAG}"
+
+      - name: Checkout the tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+
+      - name: The release must exist, be stable, and carry its package
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if ! gh release view "$DEPLOY_TAG" --json tagName >/dev/null 2>&1; then
+            echo "::error::No GitHub release for ${DEPLOY_TAG} — did the build workflow finish?"
+            exit 1
+          fi
+
+          if [ "$(gh release view "$DEPLOY_TAG" --json isPrerelease --jq .isPrerelease)" = "true" ]; then
+            echo "::error::${DEPLOY_TAG} is marked as a prerelease — refusing to publish it to customers."
+            exit 1
+          fi
+
+          if ! gh release view "$DEPLOY_TAG" --json assets --jq '.assets[].name' | grep -qx 'mmp-coming-soon.zip'; then
+            echo "::error::Release ${DEPLOY_TAG} is missing asset mmp-coming-soon.zip — did the build workflow finish?"
+            exit 1
+          fi
+
+          URL="https://github.com/${{ github.repository }}/releases/download/${DEPLOY_TAG}/mmp-coming-soon.zip"
+          CODE="$(curl -sSL -o /tmp/pkg.zip -w '%{http_code}' "$URL" || true)"
+          if [ "$CODE" != "200" ] || ! unzip -tq /tmp/pkg.zip >/dev/null 2>&1; then
+            echo "::error::The package for ${DEPLOY_TAG} is not downloadable at ${URL} (HTTP ${CODE})."
+            exit 1
+          fi
+
+          echo "Release ${DEPLOY_TAG} is stable, complete, and downloadable."
+
+      - name: Publish the stable manifest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bin/publish-manifest.sh stable "${DEPLOY_TAG#v}" "${{ github.repository }}"
+
+      - name: Summarise
+        run: |
+          {
+            echo "### Deployed ${DEPLOY_TAG} to the stable channel"
+            echo
+            echo "Every installed copy on the stable channel will offer this update"
+            echo "within six hours, or immediately via **Coming Soon → Updates →"
+            echo "Check for updates now**."
+          } >> "$GITHUB_STEP_SUMMARY"

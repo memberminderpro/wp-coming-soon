@@ -5,7 +5,7 @@
 | Branch | Meaning |
 | --- | --- |
 | `main` | Production. Every customer site on the stable channel tracks it. |
-| `develop` | Integration. Cutting a release here produces a `-beta.N` pre-release. |
+| `develop` | Integration. Cutting a release here produces a `-beta` pre-release. |
 | `manifests` | Machine-written update manifests. Never merge anything into it. |
 
 Work happens on a branch off `develop` and reaches `main` only through
@@ -30,28 +30,30 @@ not cut a release, and the reason is not obvious.
 
 ## Releasing
 
-You do not edit version numbers, but you do decide when a release happens.
+You do not edit version numbers, run any local command, or create any tag.
+Everything happens in GitHub Actions; your part is merging and, for production,
+pressing the go-button.
 
-```sh
-bin/release-pr.sh            # release develop -> a -beta.N pre-release
-bin/release-pr.sh main       # release main    -> a production release
-```
+1. Merge your PR into `develop`.
+2. release-please opens a release PR against `develop`. Merge it. That tags a
+   pre-release, builds the zip, and publishes the beta manifest — the canary
+   site updates.
+3. Open a PR from `develop` into `main` and merge it.
+4. release-please opens a release PR against `main`. Merge it. That tags and
+   builds the stable release. **Nothing has shipped yet.**
+5. Actions tab → **Deploy Release to Customer Sites** → Run workflow → enter
+   the stable tag. That publishes the stable manifest, and customer sites take
+   the update.
 
-That opens a release pull request containing the version bump and the changelog
-entry, authored by you. Review it like any other pull request. Merging it is
-what triggers the release: GitHub Actions tags it, builds the zip, attaches it
-to the release, and publishes the manifest that installed sites poll.
-
-GitHub Actions is deliberately **not** allowed to open pull requests. It runs
-with `skip-github-pull-request: true` and `contents: write` only, so nothing
-reaches a customer site without a human merging it first.
+Steps 4 and 5 are separate on purpose. Merging a release PR must never be the
+thing that reaches customers.
 
 Never hand-edit:
 
 * the version in `mmp-coming-soon.php` (two annotated blocks)
 * `CHANGELOG.md`
 * `version.txt`
-* `.release-please-manifest.json` or its develop counterpart
+* `.release-please-manifest.json` or `.release-please-manifest.prerelease.json`
 * anything on the `manifests` branch
 
 ## Before you open a pull request
