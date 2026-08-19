@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0-beta.11](https://github.com/memberminderpro/wp-coming-soon/compare/v1.4.0-beta.10...v1.4.0-beta.11) (2026-08-19)
+
+
+### Bug Fixes
+
+* make the preset actions consistent and gate the import button ([#43](https://github.com/memberminderpro/wp-coming-soon/issues/43)) ([1a6f955](https://github.com/memberminderpro/wp-coming-soon/commit/1a6f955c2b4473c1d9b0c2e8754db02ad209a637))
+
 ## [1.4.0-beta.10](https://github.com/memberminderpro/wp-coming-soon/compare/v1.4.0-beta.9...v1.4.0-beta.10) (2026-08-19)
 
 
