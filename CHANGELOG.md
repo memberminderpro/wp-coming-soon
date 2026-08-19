@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0-beta.1](https://github.com/memberminderpro/wp-coming-soon/compare/v1.4.0-beta...v1.4.0-beta.1) (2026-08-19)
+
+
+### Bug Fixes
+
+* prevent orphans in centered paragraphs ([#23](https://github.com/memberminderpro/wp-coming-soon/issues/23)) ([dfdc036](https://github.com/memberminderpro/wp-coming-soon/commit/dfdc0363bbd310f233041654ca9a10f6e2c4d7b3))
+
 ## [1.4.0-beta](https://github.com/memberminderpro/wp-coming-soon/compare/v1.3.0...v1.4.0-beta) (2026-08-19)
 
 
