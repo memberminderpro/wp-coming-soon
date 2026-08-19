@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0-beta.12](https://github.com/memberminderpro/wp-coming-soon/compare/v1.4.0-beta.11...v1.4.0-beta.12) (2026-08-19)
+
+
+### Features
+
+* download a single preset, and icons on the preset actions ([#45](https://github.com/memberminderpro/wp-coming-soon/issues/45)) ([146c5d6](https://github.com/memberminderpro/wp-coming-soon/commit/146c5d62eb0614027fa4772cfc4f1a9516826c30))
+
 ## [1.4.0-beta.11](https://github.com/memberminderpro/wp-coming-soon/compare/v1.4.0-beta.10...v1.4.0-beta.11) (2026-08-19)
 
 
