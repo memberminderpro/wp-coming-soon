@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.4.0-beta](https://github.com/memberminderpro/wp-coming-soon/compare/v1.3.0...v1.4.0-beta) (2026-08-19)
+
+
+### Features
+
+* promote the admin bar status button and self-hosted update pipeline to production ([055c8e5](https://github.com/memberminderpro/wp-coming-soon/commit/055c8e554e86afe00a65826c2157697255477d5c))
+* replace the dashboard notice with an admin bar status button ([#5](https://github.com/memberminderpro/wp-coming-soon/issues/5)) ([aa5d7b8](https://github.com/memberminderpro/wp-coming-soon/commit/aa5d7b8859e7fb229ad74e0b0e9503a7b97e9064))
+* reset controls, saved presets, JSON export and import, with undo ([8ae08bf](https://github.com/memberminderpro/wp-coming-soon/commit/8ae08bf169ac9aaeda9de19c3f36881a8da3ae7c))
+* reset controls, saved presets, JSON export and import, with undo ([06d265c](https://github.com/memberminderpro/wp-coming-soon/commit/06d265c43c0fcba6b811bd9ea6a3f718aa063aa5))
+* self-contained coming soon plugin with GitHub release updates ([db3056d](https://github.com/memberminderpro/wp-coming-soon/commit/db3056d3b50c923db4157050ec607822bf3f56dd))
+* settings layer for resets, presets and undo ([a2d38b3](https://github.com/memberminderpro/wp-coming-soon/commit/a2d38b354779c637b771049db3dc527d6565a9e0))
+
+
+### Bug Fixes
+
+* admin bar button opens the settings page and stays readable on hover ([#9](https://github.com/memberminderpro/wp-coming-soon/issues/9)) ([eb577ad](https://github.com/memberminderpro/wp-coming-soon/commit/eb577ad0da1f032bd0ecb6a8d32024357d6026ee))
+* never refresh the update manifest during a front-end request ([09f118d](https://github.com/memberminderpro/wp-coming-soon/commit/09f118d4ab415c0888d1a302b1d16873b99c9e00))
+* never refresh the update manifest during a front-end request ([#1](https://github.com/memberminderpro/wp-coming-soon/issues/1)) ([e5d7cd5](https://github.com/memberminderpro/wp-coming-soon/commit/e5d7cd5570125b1ccbbdcae585eb07fe7af47bdc))
+
 ## [1.3.0](https://github.com/memberminderpro/wp-coming-soon/compare/v1.2.0...v1.3.0) (2026-08-19)
 
 
