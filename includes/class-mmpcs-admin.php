@@ -131,6 +131,11 @@ class MMPCS_Admin {
 				'mediaButton' => __( 'Use this image', 'mmp-coming-soon' ),
 				'confirmRow'  => __( 'Remove this row?', 'mmp-coming-soon' ),
 				'untitled'    => __( 'Untitled logo', 'mmp-coming-soon' ),
+				'previewUrl'   => MMPCS_Preview::endpoint(),
+				'previewNonce' => wp_create_nonce( MMPCS_Preview::ACTION ),
+				'optionKey'    => MMPCS_OPTION,
+				'previewUpdating' => __( 'Updating…', 'mmp-coming-soon' ),
+				'previewCurrent'  => __( 'Up to date', 'mmp-coming-soon' ),
 				/* translators: %s: the image's natural width in pixels. */
 				'naturalWidth' => __( 'Original: %s px wide', 'mmp-coming-soon' ),
 			)
@@ -171,6 +176,7 @@ class MMPCS_Admin {
 				</a>
 			</p>
 
+			<div class="mmpcs-layout" data-mmpcs-layout>
 			<form method="post" action="options.php" class="mmpcs-form">
 				<?php settings_fields( self::OPTION_PAGE ); ?>
 
@@ -197,6 +203,9 @@ class MMPCS_Admin {
 
 				<?php submit_button(); ?>
 			</form>
+
+			<?php self::preview_pane(); ?>
+			</div>
 
 			<?php
 			// Rendered outside the settings form: these act immediately and
@@ -1019,6 +1028,42 @@ class MMPCS_Admin {
 			</label>
 			<?php endforeach; ?>
 		</div>
+		<?php
+	}
+
+	/**
+	 * The live preview pane.
+	 *
+	 * The iframe starts empty and is filled by the first post from the admin
+	 * script, so the pane costs a page load nothing when it is collapsed and
+	 * never renders stale saved state before the unsaved state arrives.
+	 *
+	 * @return void
+	 */
+	private static function preview_pane() {
+		?>
+		<aside class="mmpcs-preview" data-mmpcs-preview>
+			<div class="mmpcs-preview__bar">
+				<button type="button" class="button-link mmpcs-preview__toggle" data-preview-toggle aria-expanded="true">
+					<span class="dashicons dashicons-visibility"></span>
+					<span><?php esc_html_e( 'Live preview', 'mmp-coming-soon' ); ?></span>
+				</button>
+				<span class="mmpcs-preview__state" data-preview-state role="status"></span>
+				<button type="button" class="button button-small" data-preview-popout>
+					<?php esc_html_e( 'Pop out', 'mmp-coming-soon' ); ?>
+				</button>
+			</div>
+			<div class="mmpcs-preview__stage" data-preview-stage>
+				<iframe
+					class="mmpcs-preview__frame"
+					name="mmpcs_preview_frame"
+					title="<?php esc_attr_e( 'Live preview of the coming soon page', 'mmp-coming-soon' ); ?>"
+					data-preview-frame></iframe>
+			</div>
+			<p class="mmpcs-preview__note description">
+				<?php esc_html_e( 'Shows what you have typed, saved or not. Nothing here changes the live site.', 'mmp-coming-soon' ); ?>
+			</p>
+		</aside>
 		<?php
 	}
 

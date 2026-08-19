@@ -357,3 +357,85 @@
 	color: #b32d2e;
 	cursor: pointer;
 }
+
+/* ---------- live preview ---------- */
+
+/*
+ * Landscape puts the pane beside the settings; portrait and anything narrow
+ * stacks it underneath. The breakpoint is orientation plus width rather than
+ * width alone, because a narrow landscape window still reads better in two
+ * columns than a wide portrait one does.
+ */
+.mmpcs-layout {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 1.5rem;
+	align-items: start;
+}
+
+@media (min-width: 1200px) and (orientation: landscape) {
+	.mmpcs-layout {
+		grid-template-columns: minmax(0, 1fr) minmax(20rem, 34rem);
+	}
+
+	.mmpcs-preview {
+		position: sticky;
+		/* Clears the admin bar so the pane does not slide under it. */
+		top: 46px;
+	}
+}
+
+.mmpcs-preview {
+	min-width: 0;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	background: #f6f7f7;
+}
+
+.mmpcs-preview__bar {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.5rem 0.75rem;
+	border-bottom: 1px solid #dcdcde;
+}
+
+.mmpcs-preview__toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.mmpcs-preview__state {
+	margin-left: auto;
+	color: #646970;
+	font-size: 0.75rem;
+}
+
+.mmpcs-preview__stage {
+	overflow: hidden;
+	background: #101c2d;
+}
+
+/*
+ * The document renders at its real desktop width and is scaled down, so the
+ * pane shows the landscape layout in miniature rather than the page's own
+ * narrow breakpoint.
+ */
+.mmpcs-preview__frame {
+	display: block;
+	border: 0;
+	transform-origin: top left;
+}
+
+.mmpcs-preview__note {
+	margin: 0;
+	padding: 0.5rem 0.75rem;
+}
+
+.mmpcs-preview.is-collapsed .mmpcs-preview__stage,
+.mmpcs-preview.is-collapsed .mmpcs-preview__note {
+	display: none;
+}

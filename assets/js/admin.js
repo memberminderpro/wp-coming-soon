@@ -69,8 +69,15 @@
 		input.dataset.mmpcsColor = 'done';
 
 		$( input ).wpColorPicker( {
-			change: function () {},
-			clear: function () {}
+			change: function ( event, ui ) {
+				// The input's own value lags the picker during a drag, so take
+				// the colour from the picker itself.
+				input.value = ui.color.toString();
+				onColorChanged( input );
+			},
+			clear: function () {
+				onColorChanged( input );
+			}
 		} );
 	}
 
@@ -408,6 +415,342 @@
 		syncLogoLayouts();
 	}
 
+	/*
+	 * Settings that are nothing but a CSS custom property on the rendered page.
+	 * These can be pushed into an open preview without re-rendering it, which
+	 * is what makes dragging a colour picker feel live. Everything absent from
+	 * this map changes markup and takes the slower path.
+	 */
+	var CSS_VARS = {
+		'[palette][accent]': '--mmpcs-accent',
+		'[palette][accent_hover]': '--mmpcs-accent-hover',
+		'[palette][ink]': '--mmpcs-ink',
+		'[palette][navy]': '--mmpcs-navy',
+		'[palette][crimson]': '--mmpcs-crimson',
+		'[palette][offwhite]': '--mmpcs-offwhite'
+	};
+
+	/* Fields belonging to options.php, never forwarded to the preview. */
+	var RESERVED_FIELDS = [ '_wpnonce', '_wp_http_referer', 'option_page', 'action' ];
+
+	var PREVIEW_WIDTH  = 1440;
+	var PREVIEW_HEIGHT = 900;
+	var FRAME_NAME     = 'mmpcs_preview_frame';
+	var POPOUT_NAME    = 'mmpcs_preview_window';
+	var STORAGE_KEY    = 'mmpcsPreviewOpen';
+
+	var previewTimer;
+	var popout;
+
+	/**
+	 * The settings form, or null on a screen without one.
+	 *
+	 * @return {HTMLElement|null} The form.
+	 */
+	function settingsForm() {
+		return document.querySelector( '.mmpcs-form' );
+	}
+
+	/**
+	 * Which custom property, if any, a field maps to.
+	 *
+	 * @param {HTMLElement} field A form field.
+	 * @return {string|null} The property name.
+	 */
+	function cssVarFor( field ) {
+		var name = field.getAttribute( 'name' ) || '';
+		var key  = name.replace( strings.optionKey || '', '' );
+
+		return CSS_VARS[ key ] || null;
+	}
+
+	/**
+	 * Every custom property the current form state implies.
+	 *
+	 * @return {Object} Property name to value.
+	 */
+	function collectVars() {
+		var form = settingsForm();
+		var vars = {};
+
+		if ( ! form ) {
+			return vars;
+		}
+
+		form.querySelectorAll( '[name]' ).forEach( function ( field ) {
+			var prop = cssVarFor( field );
+
+			if ( prop && field.value ) {
+				vars[ prop ] = field.value;
+			}
+		} );
+
+		/*
+		 * The page background is not a field of its own: the renderer uses the
+		 * aurora's base colour when the aurora is on and the ink colour when it
+		 * is off, so the same rule has to be applied here or the instant path
+		 * would disagree with a re-render.
+		 */
+		var auroraOn = form.querySelector( '[name$="[aurora][enabled]"]' );
+		var base     = form.querySelector( '[name$="[aurora][base]"]' );
+		var ink      = form.querySelector( '[name$="[palette][ink]"]' );
+
+		if ( auroraOn && auroraOn.checked && base && base.value ) {
+			vars['--mmpcs-page-bg'] = base.value;
+		} else if ( ink && ink.value ) {
+			vars['--mmpcs-page-bg'] = ink.value;
+		}
+
+		return vars;
+	}
+
+	/**
+	 * Push custom properties into every open preview.
+	 */
+	function pushVars() {
+		var message = { type: 'mmpcs-preview-vars', vars: collectVars() };
+		var frame   = document.querySelector( '[data-preview-frame]' );
+
+		if ( frame && frame.contentWindow ) {
+			frame.contentWindow.postMessage( message, window.location.origin );
+		}
+
+		if ( popout && ! popout.closed ) {
+			popout.postMessage( message, window.location.origin );
+		}
+	}
+
+	/**
+	 * A colour changed: instant where it is only a custom property, a full
+	 * re-render where it is not -- the aurora's blob colours are markup.
+	 *
+	 * @param {HTMLElement} input The colour field.
+	 */
+	function onColorChanged( input ) {
+		if ( cssVarFor( input ) || input.name.indexOf( '[aurora][base]' ) !== -1 ) {
+			pushVars();
+
+			return;
+		}
+
+		schedulePreview();
+	}
+
+	/**
+	 * Post the current, unsaved form state to one named target.
+	 *
+	 * A real form post rather than fetch(): the response is a whole HTML
+	 * document, and a form can address an iframe or a named window directly
+	 * without any of it passing through this page.
+	 *
+	 * @param {string} target Name of the frame or window to render into.
+	 */
+	function postPreview( target ) {
+		var form = settingsForm();
+
+		if ( ! form || ! strings.previewUrl ) {
+			return;
+		}
+
+		var carrier = document.createElement( 'form' );
+
+		carrier.method = 'post';
+		carrier.action = strings.previewUrl;
+		carrier.target = target;
+		carrier.style.display = 'none';
+
+		var nonce = document.createElement( 'input' );
+
+		nonce.type  = 'hidden';
+		nonce.name  = '_wpnonce';
+		nonce.value = strings.previewNonce || '';
+		carrier.appendChild( nonce );
+
+		// FormData reflects exactly what a save would send, including which
+		// checkboxes are unticked and how the repeaters are currently ordered.
+		new window.FormData( form ).forEach( function ( value, key ) {
+			if ( 'string' !== typeof value ) {
+				return;
+			}
+
+			/*
+			 * settings_fields() adds the plumbing options.php needs, and every
+			 * piece of it collides with this endpoint: a second _wpnonce would
+			 * override the one above and fail the check, and action=update
+			 * would beat the action in the URL and misroute the request
+			 * entirely. The settings themselves are all this endpoint wants.
+			 */
+			if ( RESERVED_FIELDS.indexOf( key ) !== -1 ) {
+				return;
+			}
+
+			var field = document.createElement( 'input' );
+
+			field.type  = 'hidden';
+			field.name  = key;
+			field.value = value;
+			carrier.appendChild( field );
+		} );
+
+		document.body.appendChild( carrier );
+		carrier.submit();
+		document.body.removeChild( carrier );
+	}
+
+	/**
+	 * Re-render every open preview, at most once per quiet moment.
+	 */
+	function schedulePreview() {
+		window.clearTimeout( previewTimer );
+
+		previewTimer = window.setTimeout( function () {
+			var pane = document.querySelector( '[data-mmpcs-preview]' );
+
+			setPreviewState( strings.previewUpdating );
+
+			if ( pane && ! pane.classList.contains( 'is-collapsed' ) ) {
+				postPreview( FRAME_NAME );
+			}
+
+			if ( popout && ! popout.closed ) {
+				postPreview( POPOUT_NAME );
+			}
+		}, 400 );
+	}
+
+	/**
+	 * @param {string} text Status text.
+	 */
+	function setPreviewState( text ) {
+		var state = document.querySelector( '[data-preview-state]' );
+
+		if ( state ) {
+			state.textContent = text || '';
+		}
+	}
+
+	/**
+	 * Scale the full-width rendering down to whatever room the pane has.
+	 */
+	function fitPreview() {
+		var stage = document.querySelector( '[data-preview-stage]' );
+		var frame = document.querySelector( '[data-preview-frame]' );
+
+		if ( ! stage || ! frame ) {
+			return;
+		}
+
+		var scale = stage.clientWidth / PREVIEW_WIDTH;
+
+		if ( ! scale ) {
+			return;
+		}
+
+		frame.style.width     = PREVIEW_WIDTH + 'px';
+		frame.style.height    = PREVIEW_HEIGHT + 'px';
+		frame.style.transform = 'scale(' + scale + ')';
+		stage.style.height    = ( PREVIEW_HEIGHT * scale ) + 'px';
+	}
+
+	/**
+	 * The live preview pane.
+	 */
+	function initPreview() {
+		var pane = document.querySelector( '[data-mmpcs-preview]' );
+		var form = settingsForm();
+
+		if ( ! pane || ! form ) {
+			return;
+		}
+
+		var toggle = pane.querySelector( '[data-preview-toggle]' );
+		var frame  = pane.querySelector( '[data-preview-frame]' );
+
+		// Collapsed state is a preference, so it outlives the page.
+		var collapsed = 'false' === window.localStorage.getItem( STORAGE_KEY );
+
+		pane.classList.toggle( 'is-collapsed', collapsed );
+
+		if ( toggle ) {
+			toggle.setAttribute( 'aria-expanded', collapsed ? 'false' : 'true' );
+
+			toggle.addEventListener( 'click', function () {
+				var nowCollapsed = ! pane.classList.contains( 'is-collapsed' );
+
+				pane.classList.toggle( 'is-collapsed', nowCollapsed );
+				toggle.setAttribute( 'aria-expanded', nowCollapsed ? 'false' : 'true' );
+				window.localStorage.setItem( STORAGE_KEY, nowCollapsed ? 'false' : 'true' );
+
+				if ( ! nowCollapsed ) {
+					fitPreview();
+					schedulePreview();
+				}
+			} );
+		}
+
+		var popoutButton = pane.querySelector( '[data-preview-popout]' );
+
+		if ( popoutButton ) {
+			popoutButton.addEventListener( 'click', function () {
+				// Opened blank and named, so the same form post that fills the
+				// iframe can address it. No GET preview URL is involved.
+				popout = window.open( '', POPOUT_NAME, 'width=1280,height=860' );
+
+				if ( popout ) {
+					postPreview( POPOUT_NAME );
+					popout.focus();
+				}
+			} );
+		}
+
+		if ( frame ) {
+			frame.addEventListener( 'load', function () {
+				setPreviewState( strings.previewCurrent );
+			} );
+		}
+
+		// A preview that has just finished loading asks for the current
+		// colours, so a window opened after the last edit is not stale.
+		window.addEventListener( 'message', function ( event ) {
+			if ( event.origin !== window.location.origin ) {
+				return;
+			}
+
+			if ( event.data && 'mmpcs-preview-ready' === event.data.type ) {
+				pushVars();
+			}
+		} );
+
+		form.addEventListener( 'input', function ( event ) {
+			// Colour fields have their own instant path via the picker.
+			if ( event.target.classList.contains( 'mmpcs-color' ) ) {
+				return;
+			}
+
+			schedulePreview();
+		} );
+
+		form.addEventListener( 'change', function ( event ) {
+			if ( event.target.classList.contains( 'mmpcs-color' ) ) {
+				return;
+			}
+
+			schedulePreview();
+		} );
+
+		if ( window.ResizeObserver ) {
+			new window.ResizeObserver( fitPreview ).observe( pane );
+		} else {
+			window.addEventListener( 'resize', fitPreview );
+		}
+
+		fitPreview();
+
+		if ( ! collapsed ) {
+			schedulePreview();
+		}
+	}
+
 	/**
 	 * Confirm anything destructive before it submits.
 	 */
@@ -429,5 +772,6 @@
 		initRepeaters();
 		initMedia();
 		initLogos();
+		initPreview();
 	} );
 }( window.jQuery ) );
