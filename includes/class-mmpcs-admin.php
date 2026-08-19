@@ -29,7 +29,6 @@ class MMPCS_Admin {
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue' ) );
 		add_filter( 'plugin_action_links_' . plugin_basename( MMPCS_FILE ), array( __CLASS__, 'action_links' ) );
 		add_action( 'admin_init', array( __CLASS__, 'handle_update_check' ) );
-		add_action( 'admin_notices', array( __CLASS__, 'live_notice' ) );
 	}
 
 	/**
@@ -93,37 +92,6 @@ class MMPCS_Admin {
 		);
 
 		return $links;
-	}
-
-	/**
-	 * Remind administrators, on every admin screen, that the site is gated.
-	 *
-	 * @return void
-	 */
-	public static function live_notice() {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			return;
-		}
-
-		$settings = MMPCS_Settings::get();
-
-		if ( empty( $settings['enabled'] ) ) {
-			return;
-		}
-
-		$screen = get_current_screen();
-
-		if ( $screen && 'toplevel_page_' . self::MENU_SLUG === $screen->id ) {
-			return;
-		}
-
-		printf(
-			'<div class="notice notice-warning"><p><strong>%s</strong> %s <a href="%s">%s</a></p></div>',
-			esc_html__( 'Coming Soon is live.', 'mmp-coming-soon' ),
-			esc_html__( 'Visitors who are not signed in see the coming soon page instead of your site.', 'mmp-coming-soon' ),
-			esc_url( admin_url( 'admin.php?page=' . self::MENU_SLUG ) ),
-			esc_html__( 'Manage settings', 'mmp-coming-soon' )
-		);
 	}
 
 	/**
@@ -590,13 +558,6 @@ class MMPCS_Admin {
 						<?php else : ?>
 							<p class="description"><?php esc_html_e( 'Keep customer sites on Stable. Put one site you control on Beta so a bad release is caught before it reaches everyone.', 'mmp-coming-soon' ); ?></p>
 						<?php endif; ?>
-					</td>
-				</tr>
-				<tr>
-					<th scope="row"><?php esc_html_e( 'Update source', 'mmp-coming-soon' ); ?></th>
-					<td>
-						<code><?php echo esc_html( MMPCS_Updater::manifest_url() ); ?></code>
-						<p class="description"><?php esc_html_e( 'Checked at most every six hours, and cached in between.', 'mmp-coming-soon' ); ?></p>
 					</td>
 				</tr>
 			</table>

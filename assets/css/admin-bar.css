@@ -1,0 +1,76 @@
+/*
+ * MMP Coming Soon — admin bar status button.
+ *
+ * Maroon while the coming soon page is off, green while it is live. The two
+ * ID selectors are needed to beat core's own admin bar hover rules without
+ * resorting to !important.
+ */
+
+#wpadminbar li#wp-admin-bar-mmpcs-status > .ab-item {
+	--mmpcs-ab-bg: #8a1c30;
+	--mmpcs-ab-edge: rgba(0, 0, 0, 0.28);
+
+	background-color: var(--mmpcs-ab-bg);
+	color: #fff;
+	font-weight: 600;
+	box-shadow: inset 0 -2px 0 var(--mmpcs-ab-edge);
+	transition:
+		filter 0.15s ease,
+		box-shadow 0.15s ease;
+}
+
+#wpadminbar li#wp-admin-bar-mmpcs-status.mmpcs-ab--on > .ab-item {
+	--mmpcs-ab-bg: #1e7d46;
+}
+
+#wpadminbar li#wp-admin-bar-mmpcs-status > .ab-item .ab-icon::before {
+	content: "\f488"; /* dashicons-megaphone */
+	color: #fff;
+	top: 2px;
+}
+
+#wpadminbar li#wp-admin-bar-mmpcs-status > .ab-item .ab-label {
+	color: #fff;
+}
+
+/* Hover and keyboard focus: a touch brighter, with a shallow lift. */
+#wpadminbar li#wp-admin-bar-mmpcs-status:hover > .ab-item,
+#wpadminbar li#wp-admin-bar-mmpcs-status > .ab-item:focus,
+#wpadminbar li#wp-admin-bar-mmpcs-status.hover > .ab-item {
+	background-color: var(--mmpcs-ab-bg);
+	color: #fff;
+	filter: brightness(1.16);
+	box-shadow:
+		inset 0 -2px 0 var(--mmpcs-ab-edge),
+		0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+#wpadminbar li#wp-admin-bar-mmpcs-status:hover > .ab-item .ab-icon::before,
+#wpadminbar li#wp-admin-bar-mmpcs-status:hover > .ab-item .ab-label {
+	color: #fff;
+}
+
+/* The submenu inherits the admin bar's own styling, not the button's. */
+#wpadminbar li#wp-admin-bar-mmpcs-status .ab-submenu {
+	background-color: #2c3338;
+}
+
+#wpadminbar li#wp-admin-bar-mmpcs-status .ab-submenu .ab-item {
+	background-color: transparent;
+	color: #c3c4c7;
+	font-weight: 400;
+	box-shadow: none;
+}
+
+#wpadminbar li#wp-admin-bar-mmpcs-status .ab-submenu .ab-item:hover,
+#wpadminbar li#wp-admin-bar-mmpcs-status .ab-submenu .ab-item:focus {
+	color: #72aee6;
+	filter: none;
+	box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	#wpadminbar li#wp-admin-bar-mmpcs-status > .ab-item {
+		transition: none;
+	}
+}

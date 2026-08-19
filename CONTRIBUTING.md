@@ -30,9 +30,21 @@ not cut a release, and the reason is not obvious.
 
 ## Releasing
 
-You do not edit version numbers. Merging into `develop` or `main` opens a
-release pull request; merging *that* tags the release, attaches the zip, and
-publishes the manifest.
+You do not edit version numbers, but you do decide when a release happens.
+
+```sh
+bin/release-pr.sh            # release develop -> a -beta.N pre-release
+bin/release-pr.sh main       # release main    -> a production release
+```
+
+That opens a release pull request containing the version bump and the changelog
+entry, authored by you. Review it like any other pull request. Merging it is
+what triggers the release: GitHub Actions tags it, builds the zip, attaches it
+to the release, and publishes the manifest that installed sites poll.
+
+GitHub Actions is deliberately **not** allowed to open pull requests. It runs
+with `skip-github-pull-request: true` and `contents: write` only, so nothing
+reaches a customer site without a human merging it first.
 
 Never hand-edit:
 

@@ -101,11 +101,16 @@ develop ───────PR──▶ main ─────▶ release PR ─�
    (`feat: …`, `fix: …`), because a squash merge uses it as the commit message.
    A CI check enforces this: a bad title means release-please silently skips
    the release.
-2. Merging opens (or updates) a release PR against `develop`. Merging *that*
-   tags a `-beta.N` pre-release, attaches the zip, and publishes the beta
-   manifest.
-3. When the beta looks good, open a PR from `develop` into `main`. Merging its
-   release PR cuts the stable release and publishes the stable manifest.
+2. When you want to cut a beta, run `bin/release-pr.sh`. It opens a release PR
+   with the version bump and changelog entry. Merging it tags a `-beta.N`
+   pre-release, attaches the zip, and publishes the beta manifest.
+3. When the beta looks good, open a PR from `develop` into `main`, then run
+   `bin/release-pr.sh main` and merge that release PR to cut the stable
+   release.
+
+GitHub Actions never opens a pull request. It runs with
+`skip-github-pull-request: true` and `contents: write` only, so its job is
+limited to tagging and publishing what a human already merged.
 
 Sites pick up a release within six hours, or immediately from
 **Coming Soon → Updates → Check for updates now**.
