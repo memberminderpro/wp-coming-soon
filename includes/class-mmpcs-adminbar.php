@@ -79,10 +79,7 @@ class MMPCS_Admin_Bar {
 				'id'    => 'mmpcs-status',
 				'title' => '<span class="ab-icon" aria-hidden="true"></span><span class="ab-label">'
 					. esc_html__( 'Coming Soon', 'mmp-coming-soon' ) . '</span>',
-				// Always the preview URL: an administrator visiting the site
-				// normally bypasses the gate, so the live front page would not
-				// show them the holding page even when it is switched on.
-				'href'  => self::preview_url(),
+				'href'  => admin_url( 'admin.php?page=' . MMPCS_MENU_SLUG ),
 				'meta'  => array(
 					'class' => 'mmpcs-ab ' . ( $enabled ? 'mmpcs-ab--on' : 'mmpcs-ab--off' ),
 					'title' => $title,
@@ -90,34 +87,6 @@ class MMPCS_Admin_Bar {
 			)
 		);
 
-		$bar->add_node(
-			array(
-				'parent' => 'mmpcs-status',
-				'id'     => 'mmpcs-status-view',
-				'title'  => __( 'View the coming soon page', 'mmp-coming-soon' ),
-				'href'   => self::preview_url(),
-			)
-		);
-
-		$bar->add_node(
-			array(
-				'parent' => 'mmpcs-status',
-				'id'     => 'mmpcs-status-settings',
-				'title'  => $enabled
-					? __( 'Settings — switch it off', 'mmp-coming-soon' )
-					: __( 'Settings — switch it on', 'mmp-coming-soon' ),
-				'href'   => admin_url( 'admin.php?page=mmp-coming-soon' ),
-			)
-		);
-	}
-
-	/**
-	 * A nonce-protected preview link.
-	 *
-	 * @return string
-	 */
-	private static function preview_url() {
-		return wp_nonce_url( add_query_arg( 'mmpcs_preview', '1', home_url( '/' ) ), 'mmpcs_preview' );
 	}
 
 	/**

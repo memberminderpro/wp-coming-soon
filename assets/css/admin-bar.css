@@ -1,76 +1,71 @@
 /*
  * MMP Coming Soon — admin bar status button.
  *
- * Maroon while the coming soon page is off, green while it is live. The two
- * ID selectors are needed to beat core's own admin bar hover rules without
- * resorting to !important.
+ * Maroon while the coming soon page is off, green while it is live. Hovering
+ * lightens the background and changes nothing else.
+ *
+ * Every selector is anchored on THREE ids (#wpadminbar #wp-toolbar and the
+ * node's own id). That is deliberate. WordPress admin colour schemes style the
+ * label directly with rules like
+ *
+ *   #wpadminbar:not(.mobile) > #wp-toolbar li:hover span.ab-label { color: #e14d43 }
+ *
+ * which is two ids, three classes and two elements. A two-id selector loses to
+ * it on element count and the label turns the scheme's accent colour on hover,
+ * unreadable against this button's background. Three ids wins outright against
+ * anything core ships, without reaching for !important.
  */
 
-#wpadminbar li#wp-admin-bar-mmpcs-status > .ab-item {
-	--mmpcs-ab-bg: #8a1c30;
-	--mmpcs-ab-edge: rgba(0, 0, 0, 0.28);
+/* ---------- background ---------- */
 
-	background-color: var(--mmpcs-ab-bg);
-	color: #fff;
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status > .ab-item {
+	background-color: #8a1c30;
 	font-weight: 600;
-	box-shadow: inset 0 -2px 0 var(--mmpcs-ab-edge);
-	transition:
-		filter 0.15s ease,
-		box-shadow 0.15s ease;
+	transition: background-color 0.15s ease;
 }
 
-#wpadminbar li#wp-admin-bar-mmpcs-status.mmpcs-ab--on > .ab-item {
-	--mmpcs-ab-bg: #1e7d46;
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status.mmpcs-ab--on > .ab-item {
+	background-color: #1e7d46;
 }
 
-#wpadminbar li#wp-admin-bar-mmpcs-status > .ab-item .ab-icon::before {
-	content: "\f488"; /* dashicons-megaphone */
+/* Hover, the .hover class the admin bar sets in JS, and keyboard focus. */
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status:hover > .ab-item,
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status.hover > .ab-item,
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status > .ab-item:focus {
+	background-color: #a62439;
+}
+
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status.mmpcs-ab--on:hover > .ab-item,
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status.mmpcs-ab--on.hover > .ab-item,
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status.mmpcs-ab--on > .ab-item:focus {
+	background-color: #269a55;
+}
+
+/* ---------- text and icon: white in every state ---------- */
+
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status > .ab-item,
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status > .ab-item:hover,
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status > .ab-item:focus,
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status:hover > .ab-item,
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status.hover > .ab-item,
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status > .ab-item span.ab-label,
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status > .ab-item:hover span.ab-label,
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status > .ab-item:focus span.ab-label,
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status:hover > .ab-item span.ab-label,
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status.hover > .ab-item span.ab-label,
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status > .ab-item .ab-icon::before,
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status:hover > .ab-item .ab-icon::before,
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status.hover > .ab-item .ab-icon::before {
 	color: #fff;
+}
+
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status > .ab-item .ab-icon::before {
+	content: "\f488"; /* dashicons-megaphone */
 	top: 2px;
 }
 
-#wpadminbar li#wp-admin-bar-mmpcs-status > .ab-item .ab-label {
-	color: #fff;
-}
-
-/* Hover and keyboard focus: a touch brighter, with a shallow lift. */
-#wpadminbar li#wp-admin-bar-mmpcs-status:hover > .ab-item,
-#wpadminbar li#wp-admin-bar-mmpcs-status > .ab-item:focus,
-#wpadminbar li#wp-admin-bar-mmpcs-status.hover > .ab-item {
-	background-color: var(--mmpcs-ab-bg);
-	color: #fff;
-	filter: brightness(1.16);
-	box-shadow:
-		inset 0 -2px 0 var(--mmpcs-ab-edge),
-		0 2px 6px rgba(0, 0, 0, 0.35);
-}
-
-#wpadminbar li#wp-admin-bar-mmpcs-status:hover > .ab-item .ab-icon::before,
-#wpadminbar li#wp-admin-bar-mmpcs-status:hover > .ab-item .ab-label {
-	color: #fff;
-}
-
-/* The submenu inherits the admin bar's own styling, not the button's. */
-#wpadminbar li#wp-admin-bar-mmpcs-status .ab-submenu {
-	background-color: #2c3338;
-}
-
-#wpadminbar li#wp-admin-bar-mmpcs-status .ab-submenu .ab-item {
-	background-color: transparent;
-	color: #c3c4c7;
-	font-weight: 400;
-	box-shadow: none;
-}
-
-#wpadminbar li#wp-admin-bar-mmpcs-status .ab-submenu .ab-item:hover,
-#wpadminbar li#wp-admin-bar-mmpcs-status .ab-submenu .ab-item:focus {
-	color: #72aee6;
-	filter: none;
-	box-shadow: none;
-}
-
 @media (prefers-reduced-motion: reduce) {
-	#wpadminbar li#wp-admin-bar-mmpcs-status > .ab-item {
+	#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status > .ab-item {
 		transition: none;
 	}
 }
