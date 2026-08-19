@@ -459,6 +459,12 @@
 	color: #007017;
 }
 
+/* Ahead of the channel is neither a problem nor a clean bill of health. */
+.mmpcs-ahead {
+	margin-left: 0.5rem;
+	color: #996800;
+}
+
 /* The action forms the panel buttons submit through. */
 .mmpcs-tool-form {
 	display: none;
