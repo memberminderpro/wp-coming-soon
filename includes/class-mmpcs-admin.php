@@ -745,6 +745,15 @@ class MMPCS_Admin {
 		$latest   = $manifest && ! empty( $manifest['version'] ) ? $manifest['version'] : null;
 		$behind   = $latest && version_compare( $latest, MMPCS_VERSION, '>' );
 
+		/*
+		 * Installed newer than published. Not a fault and not an edge case: it
+		 * is what a site looks like after a release has been installed by hand
+		 * to vet it before its manifest is published, which is how a stable
+		 * release gets checked. Reporting that as "up to date" against a lower
+		 * number reads as though the checker is broken.
+		 */
+		$ahead = $latest && version_compare( MMPCS_VERSION, $latest, '>' );
+
 		$check_url = wp_nonce_url(
 			add_query_arg(
 				array(
@@ -770,6 +779,19 @@ class MMPCS_Admin {
 							<?php if ( $behind ) : ?>
 								<strong class="mmpcs-behind"><?php esc_html_e( 'An update is available.', 'mmp-coming-soon' ); ?></strong>
 								<a href="<?php echo esc_url( admin_url( 'plugins.php' ) ); ?>"><?php esc_html_e( 'Go to Plugins to install it', 'mmp-coming-soon' ); ?></a>
+							<?php elseif ( $ahead ) : ?>
+								<strong class="mmpcs-ahead"><?php esc_html_e( 'Ahead of the channel.', 'mmp-coming-soon' ); ?></strong>
+								<p class="description">
+									<?php
+									printf(
+										/* translators: 1: installed version, 2: channel name, 3: published version. */
+										esc_html__( 'This site runs %1$s, which is newer than %3$s, the newest release published to the %2$s channel. Nothing is wrong — the update will simply stay quiet until a release above %1$s is published.', 'mmp-coming-soon' ),
+										'<code>' . esc_html( MMPCS_VERSION ) . '</code>',
+										'<code>' . esc_html( MMPCS_Updater::channel() ) . '</code>',
+										'<code>' . esc_html( $latest ) . '</code>'
+									);
+									?>
+								</p>
 							<?php else : ?>
 								<span class="mmpcs-current"><?php esc_html_e( 'Up to date.', 'mmp-coming-soon' ); ?></span>
 							<?php endif; ?>
