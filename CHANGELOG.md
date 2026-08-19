@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0-beta.4](https://github.com/memberminderpro/wp-coming-soon/compare/v1.4.0-beta.3...v1.4.0-beta.4) (2026-08-19)
+
+
+### Features
+
+* live preview pane on the settings screen ([#29](https://github.com/memberminderpro/wp-coming-soon/issues/29)) ([d7011c0](https://github.com/memberminderpro/wp-coming-soon/commit/d7011c093ff5a922e76c04b2868c4caac120d65d))
+
 ## [1.4.0-beta.3](https://github.com/memberminderpro/wp-coming-soon/compare/v1.4.0-beta.2...v1.4.0-beta.3) (2026-08-19)
 
 
