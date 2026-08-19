@@ -686,3 +686,28 @@
 	border-color: #b32d2e;
 	background: #b32d2e;
 }
+
+/*
+ * Icon and label in one button. WordPress's .button is inline-block with a
+ * fixed line-height, which drops a dashicon a few pixels low and leaves it
+ * hugging the text; inline-flex puts them on one centre line with a real gap.
+ */
+.mmpcs-button--icon {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3rem;
+}
+
+.mmpcs-button--icon .dashicons {
+	width: 1.1rem;
+	height: 1.1rem;
+	font-size: 1.1rem;
+	line-height: 1;
+}
+
+/* Actions sit in a row that may wrap on a narrow column. */
+.mmpcs-presets-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+}
