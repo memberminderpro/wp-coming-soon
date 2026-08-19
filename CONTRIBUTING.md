@@ -35,9 +35,15 @@ Everything happens in GitHub Actions; your part is merging and, for production,
 pressing the go-button.
 
 1. Merge your PR into `develop`.
-2. release-please opens a release PR against `develop`. Merge it. That tags a
-   pre-release, builds the zip, and publishes the beta manifest — the canary
-   site updates.
+2. release-please opens a release PR against `develop`. **It merges itself**
+   once the checks pass, tagging a pre-release, building the zip and publishing
+   the beta manifest, so the canary site updates without anyone clicking
+   anything. That PR is a rubber stamp — its only consumer is a site you
+   control — and the merge that matters is step 4, which stays manual for ever.
+
+   If a beta release PR is sitting there unmerged, check the *Auto-merge beta
+   release PRs* workflow: it warns and stops when the repository's auto-merge
+   setting is off, and merging by hand still works.
 3. Open a PR from `develop` into `main` and merge it.
 4. release-please opens a release PR against `main`. Merge it. That tags and
    builds the stable release. **Nothing has shipped yet.**

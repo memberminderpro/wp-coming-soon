@@ -1,0 +1,55 @@
+name: Auto-merge beta release PRs
+
+# The beta release PR is a rubber stamp. Its only consumer is the canary site,
+# and merging it by hand is a click that adds no judgement -- while the stable
+# release PR against main stays manual for ever, because that merge is the gate
+# that decides what reaches customers.
+#
+# Enabling auto-merge rather than merging outright means the PR still waits for
+# the required checks; if PR quality fails, nothing merges.
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  enable:
+    name: Enable auto-merge
+    # Only release-please's own branch, and only into develop. A stable release
+    # PR targets main and is deliberately not matched here.
+    if: >-
+      github.event.pull_request.base.ref == 'develop' &&
+      github.event.pull_request.head.ref == 'release-please--branches--develop'
+    runs-on: ubuntu-latest
+    steps:
+      # The same GitHub App identity release-please runs as. The default
+      # GITHUB_TOKEN is not usable here: events it creates do not trigger other
+      # workflows, so a merge it performed would never fire the push that runs
+      # Release Please, and the tag would never be created.
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+      - name: Turn on auto-merge
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR: ${{ github.event.pull_request.html_url }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          # Auto-merge is a repository setting, and gh fails outright when it is
+          # off. Warn and stop rather than putting a red cross on every release
+          # PR: the fallback is the old behaviour, merging it by hand.
+          if [ "$(gh api "repos/${REPO}" --jq '.allow_auto_merge')" != "true" ]; then
+            echo "::warning::Auto-merge is disabled for this repository. Enable it under Settings -> General -> Pull Requests -> Allow auto-merge. Until then, beta release PRs must be merged by hand."
+            exit 0
+          fi
+
+          gh pr merge --auto --squash "$PR"
