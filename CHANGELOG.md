@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.4.0](https://github.com/memberminderpro/wp-coming-soon/compare/v1.3.0...v1.4.0) (2026-08-19)
+
+
+### Features
+
+* allow an image in place of a button's label ([#31](https://github.com/memberminderpro/wp-coming-soon/issues/31)) ([80ac2bd](https://github.com/memberminderpro/wp-coming-soon/commit/80ac2bdc2281ab8d05335c6197df28fdecfa83ef))
+* download a single preset, and icons on the preset actions ([#45](https://github.com/memberminderpro/wp-coming-soon/issues/45)) ([146c5d6](https://github.com/memberminderpro/wp-coming-soon/commit/146c5d62eb0614027fa4772cfc4f1a9516826c30))
+* give buttons a name and an optional separate label ([#33](https://github.com/memberminderpro/wp-coming-soon/issues/33)) ([d4696e4](https://github.com/memberminderpro/wp-coming-soon/commit/d4696e48d5f0fd257f75c39b11b6c02db71d673a))
+* live preview pane on the settings screen ([#29](https://github.com/memberminderpro/wp-coming-soon/issues/29)) ([d7011c0](https://github.com/memberminderpro/wp-coming-soon/commit/d7011c093ff5a922e76c04b2868c4caac120d65d))
+* one exclusive control for what a button shows ([#37](https://github.com/memberminderpro/wp-coming-soon/issues/37)) ([541d04d](https://github.com/memberminderpro/wp-coming-soon/commit/541d04d772c5728dc410baada3452ed16cc06b42))
+* replace the logo fields with a logo repeater ([#27](https://github.com/memberminderpro/wp-coming-soon/issues/27)) ([5d3cd90](https://github.com/memberminderpro/wp-coming-soon/commit/5d3cd90fea7413526ccb5512edc1aa34ef0f6810))
+* secondary logo with placement, and paragraphs in the description ([#25](https://github.com/memberminderpro/wp-coming-soon/issues/25)) ([20c9fa5](https://github.com/memberminderpro/wp-coming-soon/commit/20c9fa5afb9a100c9287fbeaa8375ceace630025))
+
+
+### Bug Fixes
+
+* align captions and controls across a wrapped row ([#39](https://github.com/memberminderpro/wp-coming-soon/issues/39)) ([a9a9f5b](https://github.com/memberminderpro/wp-coming-soon/commit/a9a9f5becba17eccb5033ea83345a307eb3b13e3))
+* keep the preset actions on one line and the table intact ([#47](https://github.com/memberminderpro/wp-coming-soon/issues/47)) ([735fd6f](https://github.com/memberminderpro/wp-coming-soon/commit/735fd6fc7a1bc10f4a1a30a060a0b14979fe1156))
+* make the preset actions consistent and gate the import button ([#43](https://github.com/memberminderpro/wp-coming-soon/issues/43)) ([1a6f955](https://github.com/memberminderpro/wp-coming-soon/commit/1a6f955c2b4473c1d9b0c2e8754db02ad209a637))
+* make the settings screen respond to the space it actually has ([#35](https://github.com/memberminderpro/wp-coming-soon/issues/35)) ([5c2f464](https://github.com/memberminderpro/wp-coming-soon/commit/5c2f4640e44ba417fd1885dcfaf469f42c1e5a61))
+* prevent orphans in centered paragraphs ([#23](https://github.com/memberminderpro/wp-coming-soon/issues/23)) ([dfdc036](https://github.com/memberminderpro/wp-coming-soon/commit/dfdc0363bbd310f233041654ca9a10f6e2c4d7b3))
+* stop discarding presets and the undo slot as they are saved ([#41](https://github.com/memberminderpro/wp-coming-soon/issues/41)) ([17bd54a](https://github.com/memberminderpro/wp-coming-soon/commit/17bd54a01b81fd6f5fffde54097e7360111f19e3))
+
 ## [1.4.0-beta.13](https://github.com/memberminderpro/wp-coming-soon/compare/v1.4.0-beta.12...v1.4.0-beta.13) (2026-08-19)
 
 
