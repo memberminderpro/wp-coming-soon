@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0-beta.8](https://github.com/memberminderpro/wp-coming-soon/compare/v1.4.0-beta.7...v1.4.0-beta.8) (2026-08-19)
+
+
+### Features
+
+* one exclusive control for what a button shows ([#37](https://github.com/memberminderpro/wp-coming-soon/issues/37)) ([541d04d](https://github.com/memberminderpro/wp-coming-soon/commit/541d04d772c5728dc410baada3452ed16cc06b42))
+
 ## [1.4.0-beta.7](https://github.com/memberminderpro/wp-coming-soon/compare/v1.4.0-beta.6...v1.4.0-beta.7) (2026-08-19)
 
 
