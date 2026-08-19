@@ -64,7 +64,35 @@ jobs:
       - name: Attach the zip to the release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload "${{ needs.release-please.outputs.tag }}" mmp-coming-soon.zip --clobber
+        run: |
+          set -euo pipefail
+          # The asset filename is load-bearing: the manifest's download_url is a
+          # template ending in mmp-coming-soon.zip, so any other name publishes
+          # a release whose package 404s for every installed site.
+          test -f mmp-coming-soon.zip
+          gh release upload "${{ needs.release-please.outputs.tag }}" mmp-coming-soon.zip --clobber
+
+      - name: The published package URL must resolve
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          URL="https://github.com/${{ github.repository }}/releases/download/${{ needs.release-please.outputs.tag }}/mmp-coming-soon.zip"
+          echo "checking $URL"
+          # Release assets take a few seconds to become downloadable.
+          for attempt in 1 2 3 4 5 6; do
+            CODE="$(curl -sSL -o /tmp/pkg.zip -w '%{http_code}' "$URL" || true)"
+            if [ "$CODE" = "200" ] && unzip -tq /tmp/pkg.zip >/dev/null 2>&1; then
+              ROOTS="$(unzip -Z1 /tmp/pkg.zip | cut -d/ -f1 | sort -u)"
+              test "$ROOTS" = "mmp-coming-soon"
+              echo "package downloadable and correctly structured"
+              exit 0
+            fi
+            echo "attempt $attempt: HTTP $CODE, retrying"
+            sleep 10
+          done
+          echo "::error::the release package is not downloadable at $URL"
+          exit 1
 
       - name: Publish the update manifest
         env:
