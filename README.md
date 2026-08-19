@@ -26,7 +26,7 @@ original component when it moved between sites configured at `62.5%` and `100%`.
 | --- | --- |
 | Visibility | The on/off switch and the always-public path allowlist |
 | Content | The logo repeater and its placements; badge, heading, description |
-| Buttons | Main and support button repeaters — label, link, style, optional image per row |
+| Buttons | Main and support button repeaters — name, link, style, optional button text and image per row |
 | Footer | Company name and link, legal text, legal-link repeater |
 | Background | Aurora on/off, motion, base colour, blob colours, size, blur, speed, intensity |
 | Colors | Accent, accent hover, button text, navy, crimson, off-white |
@@ -34,13 +34,24 @@ original component when it moved between sites configured at `62.5%` and `100%`.
 
 ### Buttons
 
-A button is text by default: the label is what it says, and the style picks its
-chrome. Give a row an image instead and the image becomes the button — the label
-turns into its alt text, and the style control disappears, because a fill and a
-border around a badge that carries its own shape is chrome on top of chrome.
+Every button has a **name**, and that is all most buttons need: it is the text on
+the button, and it is what the link is called to a screen reader.
 
-The label stays required either way. On an image button it is the alt text, and
-a linked image with no alt text is a link with no accessible name.
+Two optional extras sit behind icons beside the name, so a plain button is three
+fields rather than six:
+
+* **Button text** — show something shorter or different from the name.
+* **Image** — use an image instead of text. The name becomes its alt text, and
+  the style control disappears, because a fill and a border around a badge that
+  carries its own shape is chrome on top of chrome.
+
+Where the name and the visible text differ, the name is used as the link's
+accessible name **only if it contains the visible text** — "Learn more about
+hosting" over a button reading "Learn more" is fine; "Hosting CTA" is not, and is
+ignored. That is WCAG 2.5.3, and the reason is practical: someone using voice
+control says what they can see, so an accessible name that replaces the visible
+text makes the button unreachable. The settings screen shows what will be
+announced as you type, and warns when a name is being ignored.
 
 ### Logos
 

@@ -136,6 +136,9 @@ class MMPCS_Admin {
 				'optionKey'    => MMPCS_OPTION,
 				'previewUpdating' => __( 'Updating…', 'mmp-coming-soon' ),
 				'previewCurrent'  => __( 'Up to date', 'mmp-coming-soon' ),
+				/* translators: %s: the text a screen reader will announce. */
+				'announced'       => __( 'Screen readers announce: %s', 'mmp-coming-soon' ),
+				'announceClash'   => __( 'The name must contain the button text to be announced, so the button text is used instead. Voice control users say what they can see.', 'mmp-coming-soon' ),
 				/* translators: %s: the image's natural width in pixels. */
 				'naturalWidth' => __( 'Original: %s px wide', 'mmp-coming-soon' ),
 			)
@@ -878,10 +881,16 @@ class MMPCS_Admin {
 			return;
 		}
 
+		$name  = isset( $row['name'] ) ? $row['name'] : '';
 		$label = isset( $row['label'] ) ? $row['label'] : '';
 		$url   = isset( $row['url'] ) ? $row['url'] : '';
 		$style = isset( $row['style'] ) ? $row['style'] : 'ghost';
 		$image = isset( $row['image'] ) ? $row['image'] : '';
+
+		$is_button   = 'button' === $type;
+		$has_label   = '' !== $label;
+		$has_image   = $is_button && '' !== $image;
+		$field_base  = $base . '[' . $index . ']';
 		?>
 		<div class="mmpcs-row">
 			<span class="mmpcs-move">
@@ -889,30 +898,57 @@ class MMPCS_Admin {
 				<button type="button" class="button-link mmpcs-down" aria-label="<?php esc_attr_e( 'Move down', 'mmp-coming-soon' ); ?>"><span class="dashicons dashicons-arrow-down-alt2"></span></button>
 			</span>
 			<label class="mmpcs-field">
-				<span><?php esc_html_e( 'Label', 'mmp-coming-soon' ); ?></span>
-				<input type="text" name="<?php echo esc_attr( $base ); ?>[<?php echo esc_attr( $index ); ?>][label]" value="<?php echo esc_attr( $label ); ?>">
+				<span><?php echo $is_button ? esc_html__( 'Name', 'mmp-coming-soon' ) : esc_html__( 'Label', 'mmp-coming-soon' ); ?></span>
+				<input type="text" data-button-name name="<?php echo esc_attr( $field_base ); ?>[<?php echo $is_button ? 'name' : 'label'; ?>]" value="<?php echo esc_attr( $is_button ? $name : $label ); ?>">
 			</label>
+			<?php if ( $is_button ) : ?>
+			<span class="mmpcs-chips">
+				<button
+					type="button"
+					class="mmpcs-chip"
+					data-toggle-field="label"
+					aria-pressed="<?php echo $has_label ? 'true' : 'false'; ?>"
+					<?php echo $has_image ? 'hidden' : ''; ?>
+					title="<?php esc_attr_e( 'Show different text on the button', 'mmp-coming-soon' ); ?>"
+					aria-label="<?php esc_attr_e( 'Show different text on the button', 'mmp-coming-soon' ); ?>">
+					<span class="dashicons dashicons-editor-textcolor" aria-hidden="true"></span>
+				</button>
+				<button
+					type="button"
+					class="mmpcs-chip"
+					data-toggle-field="image"
+					aria-pressed="<?php echo $has_image ? 'true' : 'false'; ?>"
+					title="<?php esc_attr_e( 'Use an image instead of text', 'mmp-coming-soon' ); ?>"
+					aria-label="<?php esc_attr_e( 'Use an image instead of text', 'mmp-coming-soon' ); ?>">
+					<span class="dashicons dashicons-format-image" aria-hidden="true"></span>
+				</button>
+			</span>
+			<?php endif; ?>
 			<label class="mmpcs-field mmpcs-field--wide">
 				<span><?php esc_html_e( 'Link', 'mmp-coming-soon' ); ?></span>
-				<input type="url" class="code" name="<?php echo esc_attr( $base ); ?>[<?php echo esc_attr( $index ); ?>][url]" value="<?php echo esc_attr( $url ); ?>">
+				<input type="url" class="code" name="<?php echo esc_attr( $field_base ); ?>[url]" value="<?php echo esc_attr( $url ); ?>">
 			</label>
-			<?php if ( 'button' === $type ) : ?>
-			<label class="mmpcs-field mmpcs-field--wide">
+			<?php if ( $is_button ) : ?>
+			<label class="mmpcs-field" data-field="label"<?php echo $has_label && ! $has_image ? '' : ' hidden'; ?>>
+				<span><?php esc_html_e( 'Button text', 'mmp-coming-soon' ); ?></span>
+				<input type="text" data-button-label name="<?php echo esc_attr( $field_base ); ?>[label]" value="<?php echo esc_attr( $label ); ?>">
+			</label>
+			<label class="mmpcs-field mmpcs-field--wide" data-field="image"<?php echo $has_image ? '' : ' hidden'; ?>>
 				<span><?php esc_html_e( 'Image', 'mmp-coming-soon' ); ?></span>
 				<span class="mmpcs-media">
-					<input type="url" class="code" data-button-image name="<?php echo esc_attr( $base ); ?>[<?php echo esc_attr( $index ); ?>][image]" value="<?php echo esc_attr( $image ); ?>">
+					<input type="url" class="code" data-button-image name="<?php echo esc_attr( $field_base ); ?>[image]" value="<?php echo esc_attr( $image ); ?>">
 					<button type="button" class="button mmpcs-media-pick"><?php esc_html_e( 'Choose image', 'mmp-coming-soon' ); ?></button>
 				</span>
-				<span class="mmpcs-hint"><?php esc_html_e( 'Optional. An image replaces the button text, and the label above becomes its alt text.', 'mmp-coming-soon' ); ?></span>
 			</label>
-			<label class="mmpcs-field mmpcs-field--narrow" data-button-style<?php echo '' !== $image ? ' hidden' : ''; ?>>
+			<label class="mmpcs-field mmpcs-field--narrow" data-field="style"<?php echo $has_image ? ' hidden' : ''; ?>>
 				<span><?php esc_html_e( 'Style', 'mmp-coming-soon' ); ?></span>
-				<select name="<?php echo esc_attr( $base ); ?>[<?php echo esc_attr( $index ); ?>][style]">
-					<?php foreach ( MMPCS_Settings::BUTTON_STYLES as $value => $name ) : ?>
-						<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $style, $value ); ?>><?php echo esc_html( $name ); ?></option>
+				<select name="<?php echo esc_attr( $field_base ); ?>[style]">
+					<?php foreach ( MMPCS_Settings::BUTTON_STYLES as $value => $style_label ) : ?>
+						<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $style, $value ); ?>><?php echo esc_html( $style_label ); ?></option>
 					<?php endforeach; ?>
 				</select>
 			</label>
+			<p class="mmpcs-announce" data-button-announce aria-live="polite"></p>
 			<?php endif; ?>
 			<button type="button" class="button-link mmpcs-remove" aria-label="<?php esc_attr_e( 'Remove row', 'mmp-coming-soon' ); ?>"><span class="dashicons dashicons-no-alt"></span></button>
 		</div>

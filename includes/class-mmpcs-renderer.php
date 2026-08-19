@@ -300,17 +300,39 @@ class MMPCS_Renderer {
 	}
 
 	/**
-	 * An ordinary button: the label is the text, the style is the chrome.
+	 * An ordinary button: text on the page, the style is the chrome.
+	 *
+	 * The visible text is the label when there is one and the name otherwise.
+	 * Where they differ, the name is offered as the accessible name -- but only
+	 * when it contains the visible text.
+	 *
+	 * That condition is WCAG 2.5.3 (Label in Name), and it is not pedantry: a
+	 * speech-input user says "click Learn more" because that is what they can
+	 * see, and their software matches it against the accessible name. Replacing
+	 * "Learn more" with "Hosting CTA" makes the button unreachable by voice. So
+	 * a name that extends the visible text is used ("Learn more about hosting"),
+	 * and a name that replaces it is ignored here and flagged in the admin.
 	 *
 	 * @param array $button One repeater row.
 	 * @return string
 	 */
 	private static function text_button( array $button ) {
+		$name  = isset( $button['name'] ) ? $button['name'] : '';
+		$label = isset( $button['label'] ) ? $button['label'] : '';
+		$text  = '' !== $label ? $label : $name;
+
+		$aria = '';
+
+		if ( '' !== $label && '' !== $name && 0 !== strcasecmp( $label, $name ) && false !== stripos( $name, $label ) ) {
+			$aria = ' aria-label="' . esc_attr( $name ) . '"';
+		}
+
 		return sprintf(
-			'<a class="coming-soon__button coming-soon__button--%s" href="%s" rel="noopener noreferrer" target="_blank">%s</a>',
+			'<a class="coming-soon__button coming-soon__button--%s" href="%s"%s rel="noopener noreferrer" target="_blank">%s</a>',
 			esc_attr( $button['style'] ),
 			esc_url( $button['url'] ),
-			esc_html( $button['label'] )
+			$aria,
+			esc_html( $text )
 		);
 	}
 
@@ -319,8 +341,11 @@ class MMPCS_Renderer {
 	 *
 	 * No style variant is applied, because a fill and a border around an image
 	 * that already carries its own shape is chrome on top of chrome -- which is
-	 * why the settings screen hides the style control once an image is set. The
-	 * label becomes the alt text, so the link keeps an accessible name.
+	 * why the settings screen hides the style control once an image is set.
+	 *
+	 * The name becomes the alt text. There is no visible text to contradict, so
+	 * no Label in Name question arises here; the alt text simply is the link's
+	 * accessible name, and the sanitiser guarantees it exists.
 	 *
 	 * @param array $button One repeater row.
 	 * @return string
@@ -330,7 +355,7 @@ class MMPCS_Renderer {
 			'<a class="coming-soon__button coming-soon__button--image" href="%s" rel="noopener noreferrer" target="_blank"><img class="coming-soon__button-img" src="%s" alt="%s" decoding="async"></a>',
 			esc_url( $button['url'] ),
 			esc_url( $button['image'] ),
-			esc_attr( $button['label'] )
+			esc_attr( isset( $button['name'] ) ? $button['name'] : '' )
 		);
 	}
 
