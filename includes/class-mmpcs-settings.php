@@ -28,6 +28,20 @@ class MMPCS_Settings {
 	);
 
 	/**
+	 * Settings grouped by the tab that owns them. Drives the per-section reset
+	 * controls, and defines what a preset or an export file carries.
+	 *
+	 * @var array<string,string[]>
+	 */
+	const SECTIONS = array(
+		'content'    => array( 'logo', 'badge_text', 'heading', 'description' ),
+		'buttons'    => array( 'buttons_main', 'buttons_support' ),
+		'footer'     => array( 'footer' ),
+		'background' => array( 'aurora' ),
+		'colors'     => array( 'palette' ),
+	);
+
+	/**
 	 * Runtime cache of the merged settings.
 	 *
 	 * @var array|null
@@ -45,6 +59,12 @@ class MMPCS_Settings {
 			'allowlist'   => '',
 			'auto_update' => true,
 			'update_channel' => 'stable',
+
+			// Saved variations, and a one-slot snapshot so any destructive
+			// action can be undone. Both live in this same option row, so
+			// uninstall stays a single delete.
+			'presets'        => array(),
+			'undo'           => array(),
 
 			'logo'      => array(
 				'url'   => 'https://www.memberminderpro.com/wp-content/uploads/MMP-LOGO-WHITE.svg',
@@ -178,6 +198,305 @@ class MMPCS_Settings {
 	}
 
 	/**
+	 * Every key a preset or an export file carries.
+	 *
+	 * Deliberately excludes the gate switch, the allowlist, the update channel
+	 * and the auto-update flag. Those describe how one site behaves, not how the
+	 * page looks: importing a design must never silently take a site offline or
+	 * move it onto a different update channel.
+	 *
+	 * @return string[]
+	 */
+	public static function portable_keys() {
+		$keys = array();
+
+		foreach ( self::SECTIONS as $section_keys ) {
+			$keys = array_merge( $keys, $section_keys );
+		}
+
+		return $keys;
+	}
+
+	/**
+	 * The portable subset of the current settings.
+	 *
+	 * @return array
+	 */
+	public static function portable() {
+		$settings = self::get();
+		$out      = array();
+
+		foreach ( self::portable_keys() as $key ) {
+			if ( array_key_exists( $key, $settings ) ) {
+				$out[ $key ] = $settings[ $key ];
+			}
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Write settings, preserving the things the options form does not own.
+	 *
+	 * @param array $settings Full settings.
+	 * @return void
+	 */
+	private static function write( array $settings ) {
+		$presets = isset( $settings['presets'] ) ? $settings['presets'] : array();
+		$undo    = isset( $settings['undo'] ) ? $settings['undo'] : array();
+
+		$clean            = self::sanitize( $settings );
+		$clean['presets'] = self::sanitize_presets( $presets );
+		$clean['undo']    = is_array( $undo ) ? $undo : array();
+
+		update_option( MMPCS_OPTION, $clean );
+		self::flush_cache();
+	}
+
+	/**
+	 * Record what the design looks like right now, so it can be restored.
+	 *
+	 * One slot rather than a stack: the realistic mistake is the click you just
+	 * made, and a stack invites people to trust it as history when it lives in
+	 * an option row that a reset could clear.
+	 *
+	 * @param string $label What is about to happen, shown on the undo control.
+	 * @return void
+	 */
+	public static function snapshot( $label ) {
+		$settings = self::get();
+
+		$settings['undo'] = array(
+			'label' => sanitize_text_field( $label ),
+			'at'    => time(),
+			'data'  => self::portable(),
+		);
+
+		self::write( $settings );
+	}
+
+	/**
+	 * Restore the undo snapshot.
+	 *
+	 * @return string|false The label of what was undone, or false when empty.
+	 */
+	public static function undo() {
+		$settings = self::get();
+
+		if ( empty( $settings['undo']['data'] ) || ! is_array( $settings['undo']['data'] ) ) {
+			return false;
+		}
+
+		$label = isset( $settings['undo']['label'] ) ? $settings['undo']['label'] : '';
+
+		foreach ( $settings['undo']['data'] as $key => $value ) {
+			if ( in_array( $key, self::portable_keys(), true ) ) {
+				$settings[ $key ] = $value;
+			}
+		}
+
+		// Undo is not itself undoable; clear the slot so the control disappears.
+		$settings['undo'] = array();
+
+		self::write( $settings );
+
+		return $label;
+	}
+
+	/**
+	 * Is there something to undo?
+	 *
+	 * @return array|false The snapshot metadata, or false.
+	 */
+	public static function undoable() {
+		$settings = self::get();
+
+		if ( empty( $settings['undo']['data'] ) ) {
+			return false;
+		}
+
+		return array(
+			'label' => isset( $settings['undo']['label'] ) ? $settings['undo']['label'] : '',
+			'at'    => isset( $settings['undo']['at'] ) ? (int) $settings['undo']['at'] : 0,
+		);
+	}
+
+	/**
+	 * Reset one section, or everything, to the shipped defaults.
+	 *
+	 * @param string $section A key of SECTIONS, or "all".
+	 * @return bool Whether anything was reset.
+	 */
+	public static function reset( $section ) {
+		$defaults = self::defaults();
+		$current  = self::get();
+
+		if ( 'all' === $section ) {
+			self::snapshot( __( 'Reset all settings', 'mmp-coming-soon' ) );
+
+			$current = self::get();
+
+			// Presets and the undo slot are the administrator's own work, not
+			// configuration, so a reset must not destroy them.
+			$defaults['presets'] = $current['presets'];
+			$defaults['undo']    = $current['undo'];
+
+			self::write( $defaults );
+
+			return true;
+		}
+
+		if ( ! isset( self::SECTIONS[ $section ] ) ) {
+			return false;
+		}
+
+		/* translators: %s: section name, e.g. background. */
+		self::snapshot( sprintf( __( 'Reset %s to defaults', 'mmp-coming-soon' ), $section ) );
+
+		$settings = self::get();
+
+		foreach ( self::SECTIONS[ $section ] as $key ) {
+			$settings[ $key ] = $defaults[ $key ];
+		}
+
+		self::write( $settings );
+
+		return true;
+	}
+
+	/**
+	 * Apply a portable payload over the current settings.
+	 *
+	 * @param array  $payload Portable settings.
+	 * @param string $label   Undo label; empty skips the snapshot.
+	 * @return bool Whether anything was applied.
+	 */
+	public static function apply_portable( array $payload, $label = '' ) {
+		$allowed = self::portable_keys();
+		$usable  = array_intersect_key( $payload, array_flip( $allowed ) );
+
+		if ( empty( $usable ) ) {
+			return false;
+		}
+
+		if ( '' !== $label ) {
+			self::snapshot( $label );
+		}
+
+		$settings = self::get();
+
+		foreach ( $usable as $key => $value ) {
+			$settings[ $key ] = $value;
+		}
+
+		self::write( $settings );
+
+		return true;
+	}
+
+	/**
+	 * Save the current design as a named preset, replacing one of the same name.
+	 *
+	 * @param string $name Preset name.
+	 * @return void
+	 */
+	public static function save_preset( $name ) {
+		$name = sanitize_text_field( $name );
+
+		if ( '' === $name ) {
+			return;
+		}
+
+		$settings = self::get();
+		$presets  = array();
+
+		foreach ( $settings['presets'] as $preset ) {
+			if ( isset( $preset['name'] ) && strtolower( $preset['name'] ) !== strtolower( $name ) ) {
+				$presets[] = $preset;
+			}
+		}
+
+		$presets[] = array(
+			'name'     => $name,
+			'saved_at' => time(),
+			'data'     => self::portable(),
+		);
+
+		$settings['presets'] = $presets;
+
+		self::write( $settings );
+	}
+
+	/**
+	 * Delete a preset by name.
+	 *
+	 * @param string $name Preset name.
+	 * @return void
+	 */
+	public static function delete_preset( $name ) {
+		$settings = self::get();
+		$presets  = array();
+
+		foreach ( $settings['presets'] as $preset ) {
+			if ( isset( $preset['name'] ) && $preset['name'] !== $name ) {
+				$presets[] = $preset;
+			}
+		}
+
+		$settings['presets'] = $presets;
+
+		self::write( $settings );
+	}
+
+	/**
+	 * Find a preset by name.
+	 *
+	 * @param string $name Preset name.
+	 * @return array|false
+	 */
+	public static function get_preset( $name ) {
+		foreach ( self::get()['presets'] as $preset ) {
+			if ( isset( $preset['name'] ) && $preset['name'] === $name ) {
+				return $preset;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Sanitise the saved preset collection.
+	 *
+	 * @param mixed $presets Raw presets.
+	 * @return array
+	 */
+	public static function sanitize_presets( $presets ) {
+		$out = array();
+
+		foreach ( (array) $presets as $preset ) {
+			if ( ! is_array( $preset ) || empty( $preset['name'] ) ) {
+				continue;
+			}
+
+			$name = sanitize_text_field( $preset['name'] );
+
+			if ( '' === $name ) {
+				continue;
+			}
+
+			$data = isset( $preset['data'] ) && is_array( $preset['data'] ) ? $preset['data'] : array();
+
+			$out[] = array(
+				'name'     => $name,
+				'saved_at' => isset( $preset['saved_at'] ) ? (int) $preset['saved_at'] : time(),
+				'data'     => array_intersect_key( $data, array_flip( self::portable_keys() ) ),
+			);
+		}
+
+		return $out;
+	}
+
+	/**
 	 * Sanitise the whole settings payload coming from the options form.
 	 *
 	 * @param mixed $input Raw submitted value.
@@ -253,6 +572,14 @@ class MMPCS_Settings {
 			'duration'  => self::clamp_int( isset( $aurora['duration'] ) ? $aurora['duration'] : 24, 4, 180, 24 ),
 			'intensity' => self::clamp_float( isset( $aurora['intensity'] ) ? $aurora['intensity'] : 0.82, 0.05, 1.0, 0.82 ),
 		);
+
+		// Presets and the undo slot are managed by their own handlers, never by
+		// the options form, so carry them through rather than letting a form
+		// submission drop them.
+		$existing        = get_option( MMPCS_OPTION, array() );
+		$existing        = is_array( $existing ) ? $existing : array();
+		$out['presets']  = isset( $existing['presets'] ) ? self::sanitize_presets( $existing['presets'] ) : array();
+		$out['undo']     = ( isset( $existing['undo'] ) && is_array( $existing['undo'] ) ) ? $existing['undo'] : array();
 
 		self::flush_cache();
 
