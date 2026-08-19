@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0-beta.6](https://github.com/memberminderpro/wp-coming-soon/compare/v1.4.0-beta.5...v1.4.0-beta.6) (2026-08-19)
+
+
+### Features
+
+* give buttons a name and an optional separate label ([#33](https://github.com/memberminderpro/wp-coming-soon/issues/33)) ([d4696e4](https://github.com/memberminderpro/wp-coming-soon/commit/d4696e48d5f0fd257f75c39b11b6c02db71d673a))
+
 ## [1.4.0-beta.5](https://github.com/memberminderpro/wp-coming-soon/compare/v1.4.0-beta.4...v1.4.0-beta.5) (2026-08-19)
 
 
