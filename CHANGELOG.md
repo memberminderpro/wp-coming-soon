@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0-beta.5](https://github.com/memberminderpro/wp-coming-soon/compare/v1.4.0-beta.4...v1.4.0-beta.5) (2026-08-19)
+
+
+### Features
+
+* allow an image in place of a button's label ([#31](https://github.com/memberminderpro/wp-coming-soon/issues/31)) ([80ac2bd](https://github.com/memberminderpro/wp-coming-soon/commit/80ac2bdc2281ab8d05335c6197df28fdecfa83ef))
+
 ## [1.4.0-beta.4](https://github.com/memberminderpro/wp-coming-soon/compare/v1.4.0-beta.3...v1.4.0-beta.4) (2026-08-19)
 
 
