@@ -349,7 +349,8 @@ class MMPCS_Admin {
 				<label for="mmpcs-preset-name" class="screen-reader-text"><?php esc_html_e( 'Preset name', 'mmp-coming-soon' ); ?></label>
 				<input type="text" id="mmpcs-preset-name" name="preset_name" form="mmpcs-preset-save-form"
 					class="regular-text" placeholder="<?php esc_attr_e( 'Name this variation', 'mmp-coming-soon' ); ?>">
-				<button type="submit" form="mmpcs-preset-save-form" class="button button-secondary">
+				<button type="submit" form="mmpcs-preset-save-form" class="button button-secondary mmpcs-button--icon">
+					<span class="dashicons dashicons-saved" aria-hidden="true"></span>
 					<?php esc_html_e( 'Save current settings as a preset', 'mmp-coming-soon' ); ?>
 				</button>
 			</p>
@@ -378,13 +379,20 @@ class MMPCS_Admin {
 							</td>
 							<td class="mmpcs-presets-actions">
 								<button type="submit" form="mmpcs-preset-apply-form" name="preset_name"
-									value="<?php echo esc_attr( $preset['name'] ); ?>" class="button button-secondary"
+									value="<?php echo esc_attr( $preset['name'] ); ?>" class="button button-secondary mmpcs-button--icon"
 									data-confirm="<?php esc_attr_e( 'Apply this preset over your current settings? You will be able to undo this.', 'mmp-coming-soon' ); ?>">
+									<span class="dashicons dashicons-yes-alt" aria-hidden="true"></span>
 									<?php esc_html_e( 'Apply', 'mmp-coming-soon' ); ?>
 								</button>
+								<button type="submit" form="mmpcs-preset-export-form" name="preset_name"
+									value="<?php echo esc_attr( $preset['name'] ); ?>" class="button button-secondary mmpcs-button--icon">
+									<span class="dashicons dashicons-download" aria-hidden="true"></span>
+									<?php esc_html_e( 'Download', 'mmp-coming-soon' ); ?>
+								</button>
 								<button type="submit" form="mmpcs-preset-delete-form" name="preset_name"
-									value="<?php echo esc_attr( $preset['name'] ); ?>" class="button button-secondary mmpcs-button--delete"
+									value="<?php echo esc_attr( $preset['name'] ); ?>" class="button button-secondary mmpcs-button--icon mmpcs-button--delete"
 									data-confirm="<?php esc_attr_e( 'Delete this preset? Deleting a preset cannot be undone.', 'mmp-coming-soon' ); ?>">
+									<span class="dashicons dashicons-trash" aria-hidden="true"></span>
 									<?php esc_html_e( 'Delete', 'mmp-coming-soon' ); ?>
 								</button>
 							</td>
@@ -399,7 +407,8 @@ class MMPCS_Admin {
 				<tr>
 					<th scope="row"><?php esc_html_e( 'Export', 'mmp-coming-soon' ); ?></th>
 					<td>
-						<button type="submit" form="mmpcs-export-form" class="button button-secondary">
+						<button type="submit" form="mmpcs-export-form" class="button button-secondary mmpcs-button--icon">
+							<span class="dashicons dashicons-download" aria-hidden="true"></span>
 							<?php esc_html_e( 'Download settings as JSON', 'mmp-coming-soon' ); ?>
 						</button>
 						<p class="description"><?php esc_html_e( 'Keep it as a file, put it in version control, or import it on another site.', 'mmp-coming-soon' ); ?></p>
@@ -409,8 +418,9 @@ class MMPCS_Admin {
 					<th scope="row"><label for="mmpcs-import-file"><?php esc_html_e( 'Import', 'mmp-coming-soon' ); ?></label></th>
 					<td>
 						<input type="file" id="mmpcs-import-file" name="mmpcs_file" form="mmpcs-import-form" accept="application/json,.json" data-import-file>
-						<button type="submit" form="mmpcs-import-form" class="button button-secondary" data-import-submit hidden
+						<button type="submit" form="mmpcs-import-form" class="button button-secondary mmpcs-button--icon" data-import-submit hidden
 							data-confirm="<?php esc_attr_e( 'Import this file over your current settings? You will be able to undo this.', 'mmp-coming-soon' ); ?>">
+							<span class="dashicons dashicons-upload" aria-hidden="true"></span>
 							<?php esc_html_e( 'Import', 'mmp-coming-soon' ); ?>
 						</button>
 						<p class="description"><?php esc_html_e( 'The file is read and discarded; nothing is added to your media library.', 'mmp-coming-soon' ); ?></p>
@@ -433,6 +443,7 @@ class MMPCS_Admin {
 			'preset_save'   => 'mmpcs-preset-save-form',
 			'preset_apply'  => 'mmpcs-preset-apply-form',
 			'preset_delete' => 'mmpcs-preset-delete-form',
+			'preset_export' => 'mmpcs-preset-export-form',
 			'export'        => 'mmpcs-export-form',
 		);
 
