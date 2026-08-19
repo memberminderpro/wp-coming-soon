@@ -150,6 +150,9 @@ class MMPCS_Admin {
 		<div class="wrap mmpcs-wrap">
 			<h1><?php esc_html_e( 'Coming Soon', 'mmp-coming-soon' ); ?></h1>
 
+			<?php self::render_notice(); ?>
+			<?php self::render_undo(); ?>
+
 			<?php if ( isset( $_GET['mmpcs_result'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
 				<?php if ( 'ok' === $_GET['mmpcs_result'] ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
 					<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Checked for updates.', 'mmp-coming-soon' ); ?></p></div>
@@ -175,6 +178,7 @@ class MMPCS_Admin {
 					<button type="button" class="mmpcs-tab" data-tab="footer"><?php esc_html_e( 'Footer', 'mmp-coming-soon' ); ?></button>
 					<button type="button" class="mmpcs-tab" data-tab="background"><?php esc_html_e( 'Background', 'mmp-coming-soon' ); ?></button>
 					<button type="button" class="mmpcs-tab" data-tab="colors"><?php esc_html_e( 'Colors', 'mmp-coming-soon' ); ?></button>
+					<button type="button" class="mmpcs-tab" data-tab="presets"><?php esc_html_e( 'Presets', 'mmp-coming-soon' ); ?></button>
 					<button type="button" class="mmpcs-tab" data-tab="updates"><?php esc_html_e( 'Updates', 'mmp-coming-soon' ); ?></button>
 				</nav>
 
@@ -190,9 +194,242 @@ class MMPCS_Admin {
 
 				<?php submit_button(); ?>
 			</form>
+
+			<?php
+			// Rendered outside the settings form: these act immediately and
+			// each needs its own nonce. Buttons inside the panels above reach
+			// them with the HTML5 form attribute rather than nesting forms,
+			// which is invalid markup.
+			self::panel_presets( $s );
+			self::tool_forms();
+			?>
 		</div>
 		<?php
 		self::templates();
+	}
+
+	/**
+	 * Result notices for the tool actions.
+	 *
+	 * @return void
+	 */
+	private static function render_notice() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$code = isset( $_GET['mmpcs_notice'] ) ? sanitize_key( wp_unslash( $_GET['mmpcs_notice'] ) ) : '';
+
+		if ( '' === $code ) {
+			return;
+		}
+
+		$messages = array(
+			'reset_section'     => array( 'success', __( 'That section was reset to its defaults.', 'mmp-coming-soon' ) ),
+			'reset_all'         => array( 'success', __( 'All settings were reset to their defaults.', 'mmp-coming-soon' ) ),
+			'reset_failed'      => array( 'error', __( 'Nothing was reset — that section is not recognised.', 'mmp-coming-soon' ) ),
+			'undone'            => array( 'success', __( 'The last change was undone.', 'mmp-coming-soon' ) ),
+			'undo_empty'        => array( 'warning', __( 'There was nothing to undo.', 'mmp-coming-soon' ) ),
+			'preset_saved'      => array( 'success', __( 'Preset saved.', 'mmp-coming-soon' ) ),
+			'preset_applied'    => array( 'success', __( 'Preset applied. You can undo this.', 'mmp-coming-soon' ) ),
+			'preset_deleted'    => array( 'success', __( 'Preset deleted.', 'mmp-coming-soon' ) ),
+			'preset_missing'    => array( 'error', __( 'That preset no longer exists.', 'mmp-coming-soon' ) ),
+			'preset_needs_name' => array( 'error', __( 'Give the preset a name before saving it.', 'mmp-coming-soon' ) ),
+			'imported'          => array( 'success', __( 'Settings imported. You can undo this.', 'mmp-coming-soon' ) ),
+			'import_no_file'    => array( 'error', __( 'Choose a file to import.', 'mmp-coming-soon' ) ),
+			'import_too_big'    => array( 'error', __( 'That file is empty or too large to be a settings export.', 'mmp-coming-soon' ) ),
+			'import_invalid'    => array( 'error', __( 'That file could not be read as JSON.', 'mmp-coming-soon' ) ),
+			'import_wrong_type' => array( 'error', __( 'That is valid JSON, but not a Coming Soon settings export.', 'mmp-coming-soon' ) ),
+			'import_empty'      => array( 'error', __( 'That export contained nothing this version can use.', 'mmp-coming-soon' ) ),
+		);
+
+		if ( ! isset( $messages[ $code ] ) ) {
+			return;
+		}
+
+		printf(
+			'<div class="notice notice-%s is-dismissible"><p>%s</p></div>',
+			esc_attr( $messages[ $code ][0] ),
+			esc_html( $messages[ $code ][1] )
+		);
+	}
+
+	/**
+	 * The undo control, shown only when there is something to undo.
+	 *
+	 * @return void
+	 */
+	private static function render_undo() {
+		$undo = MMPCS_Settings::undoable();
+
+		if ( ! $undo ) {
+			return;
+		}
+
+		?>
+		<div class="notice notice-info mmpcs-undo">
+			<p>
+				<strong><?php echo esc_html( $undo['label'] ); ?></strong>
+				<?php if ( $undo['at'] ) : ?>
+					<span class="mmpcs-undo-when">
+						<?php
+						printf(
+							/* translators: %s: human readable time difference. */
+							esc_html__( '%s ago', 'mmp-coming-soon' ),
+							esc_html( human_time_diff( $undo['at'] ) )
+						);
+						?>
+					</span>
+				<?php endif; ?>
+				<button type="submit" form="mmpcs-undo-form" class="button button-secondary">
+					<?php esc_html_e( 'Undo', 'mmp-coming-soon' ); ?>
+				</button>
+			</p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * A reset control for one section, submitted through the shared reset form.
+	 *
+	 * @param string $section Section key, or "all".
+	 * @return void
+	 */
+	private static function reset_button( $section ) {
+		?>
+		<p class="mmpcs-reset">
+			<button type="submit" form="mmpcs-reset-form" name="section"
+				value="<?php echo esc_attr( $section ); ?>"
+				class="button button-link-delete mmpcs-reset-button"
+				data-confirm="<?php echo esc_attr( 'all' === $section
+					? __( 'Reset every setting to its defaults? You will be able to undo this.', 'mmp-coming-soon' )
+					: __( 'Reset this section to its defaults? You will be able to undo this.', 'mmp-coming-soon' ) ); ?>">
+				<?php
+				echo 'all' === $section
+					? esc_html__( 'Reset all settings to defaults', 'mmp-coming-soon' )
+					: esc_html__( 'Reset this section to defaults', 'mmp-coming-soon' );
+				?>
+			</button>
+		</p>
+		<?php
+	}
+
+	/**
+	 * The presets, export and import panel.
+	 *
+	 * @param array $s Settings.
+	 * @return void
+	 */
+	private static function panel_presets( array $s ) {
+		?>
+		<section class="mmpcs-panel" data-panel="presets">
+			<h2><?php esc_html_e( 'Saved variations', 'mmp-coming-soon' ); ?></h2>
+			<p class="description">
+				<?php esc_html_e( 'A preset stores the look and the wording — logo, badge, heading, description, buttons, footer, background and colours. It deliberately does not store whether the coming soon page is switched on, the always-public paths, or the update channel, so applying one can never take a site offline or move it to another channel.', 'mmp-coming-soon' ); ?>
+			</p>
+
+			<p>
+				<label for="mmpcs-preset-name" class="screen-reader-text"><?php esc_html_e( 'Preset name', 'mmp-coming-soon' ); ?></label>
+				<input type="text" id="mmpcs-preset-name" name="preset_name" form="mmpcs-preset-save-form"
+					class="regular-text" placeholder="<?php esc_attr_e( 'Name this variation', 'mmp-coming-soon' ); ?>">
+				<button type="submit" form="mmpcs-preset-save-form" class="button button-secondary">
+					<?php esc_html_e( 'Save current settings as a preset', 'mmp-coming-soon' ); ?>
+				</button>
+			</p>
+
+			<?php if ( empty( $s['presets'] ) ) : ?>
+				<p><em><?php esc_html_e( 'No presets saved yet.', 'mmp-coming-soon' ); ?></em></p>
+			<?php else : ?>
+				<table class="widefat striped mmpcs-presets">
+					<thead>
+						<tr>
+							<th scope="col"><?php esc_html_e( 'Preset', 'mmp-coming-soon' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Saved', 'mmp-coming-soon' ); ?></th>
+							<th scope="col" class="mmpcs-presets-actions"><?php esc_html_e( 'Actions', 'mmp-coming-soon' ); ?></th>
+						</tr>
+					</thead>
+					<tbody>
+					<?php foreach ( $s['presets'] as $preset ) : ?>
+						<tr>
+							<td><strong><?php echo esc_html( $preset['name'] ); ?></strong></td>
+							<td>
+								<?php
+								echo $preset['saved_at']
+									? esc_html( sprintf( /* translators: %s: time difference. */ __( '%s ago', 'mmp-coming-soon' ), human_time_diff( $preset['saved_at'] ) ) )
+									: '&mdash;';
+								?>
+							</td>
+							<td class="mmpcs-presets-actions">
+								<button type="submit" form="mmpcs-preset-apply-form" name="preset_name"
+									value="<?php echo esc_attr( $preset['name'] ); ?>" class="button button-secondary"
+									data-confirm="<?php esc_attr_e( 'Apply this preset over your current settings? You will be able to undo this.', 'mmp-coming-soon' ); ?>">
+									<?php esc_html_e( 'Apply', 'mmp-coming-soon' ); ?>
+								</button>
+								<button type="submit" form="mmpcs-preset-delete-form" name="preset_name"
+									value="<?php echo esc_attr( $preset['name'] ); ?>" class="button-link button-link-delete"
+									data-confirm="<?php esc_attr_e( 'Delete this preset? Deleting a preset cannot be undone.', 'mmp-coming-soon' ); ?>">
+									<?php esc_html_e( 'Delete', 'mmp-coming-soon' ); ?>
+								</button>
+							</td>
+						</tr>
+					<?php endforeach; ?>
+					</tbody>
+				</table>
+			<?php endif; ?>
+
+			<h2><?php esc_html_e( 'Move settings between sites', 'mmp-coming-soon' ); ?></h2>
+			<table class="form-table" role="presentation">
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Export', 'mmp-coming-soon' ); ?></th>
+					<td>
+						<button type="submit" form="mmpcs-export-form" class="button button-secondary">
+							<?php esc_html_e( 'Download settings as JSON', 'mmp-coming-soon' ); ?>
+						</button>
+						<p class="description"><?php esc_html_e( 'Keep it as a file, put it in version control, or import it on another site.', 'mmp-coming-soon' ); ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="mmpcs-import-file"><?php esc_html_e( 'Import', 'mmp-coming-soon' ); ?></label></th>
+					<td>
+						<input type="file" id="mmpcs-import-file" name="mmpcs_file" form="mmpcs-import-form" accept="application/json,.json">
+						<button type="submit" form="mmpcs-import-form" class="button button-secondary"
+							data-confirm="<?php esc_attr_e( 'Import this file over your current settings? You will be able to undo this.', 'mmp-coming-soon' ); ?>">
+							<?php esc_html_e( 'Import', 'mmp-coming-soon' ); ?>
+						</button>
+						<p class="description"><?php esc_html_e( 'The file is read and discarded; nothing is added to your media library.', 'mmp-coming-soon' ); ?></p>
+					</td>
+				</tr>
+			</table>
+		</section>
+		<?php
+	}
+
+	/**
+	 * The action forms the panel buttons submit through.
+	 *
+	 * @return void
+	 */
+	private static function tool_forms() {
+		$forms = array(
+			'reset'         => 'mmpcs-reset-form',
+			'undo'          => 'mmpcs-undo-form',
+			'preset_save'   => 'mmpcs-preset-save-form',
+			'preset_apply'  => 'mmpcs-preset-apply-form',
+			'preset_delete' => 'mmpcs-preset-delete-form',
+			'export'        => 'mmpcs-export-form',
+		);
+
+		foreach ( $forms as $action => $form_id ) {
+			?>
+			<form id="<?php echo esc_attr( $form_id ); ?>" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="mmpcs-tool-form">
+				<input type="hidden" name="action" value="mmpcs_<?php echo esc_attr( $action ); ?>">
+				<?php wp_nonce_field( 'mmpcs_' . $action ); ?>
+			</form>
+			<?php
+		}
+		?>
+		<form id="mmpcs-import-form" method="post" enctype="multipart/form-data" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="mmpcs-tool-form">
+			<input type="hidden" name="action" value="mmpcs_import">
+			<?php wp_nonce_field( 'mmpcs_import' ); ?>
+		</form>
+		<?php
 	}
 
 	/**
@@ -238,6 +475,7 @@ class MMPCS_Admin {
 					</td>
 				</tr>
 			</table>
+			<?php self::reset_button( 'all' ); ?>
 		</section>
 		<?php
 	}
@@ -299,6 +537,7 @@ class MMPCS_Admin {
 					<td><textarea id="mmpcs-description" class="large-text" rows="4" name="<?php echo esc_attr( self::name( '[description]' ) ); ?>"><?php echo esc_textarea( $s['description'] ); ?></textarea></td>
 				</tr>
 			</table>
+			<?php self::reset_button( 'content' ); ?>
 		</section>
 		<?php
 	}
@@ -319,6 +558,7 @@ class MMPCS_Admin {
 			<h2><?php esc_html_e( 'Support buttons', 'mmp-coming-soon' ); ?></h2>
 			<p class="description"><?php esc_html_e( 'A quieter secondary row, shown smaller and dimmed until hovered.', 'mmp-coming-soon' ); ?></p>
 			<?php self::repeater( 'buttons_support', $s['buttons_support'], 'button' ); ?>
+			<?php self::reset_button( 'buttons' ); ?>
 		</section>
 		<?php
 	}
@@ -353,6 +593,7 @@ class MMPCS_Admin {
 			<h2><?php esc_html_e( 'Legal links', 'mmp-coming-soon' ); ?></h2>
 			<p class="description"><?php esc_html_e( 'Appended after the legal text, separated by middots. These may point anywhere, including external legal pages.', 'mmp-coming-soon' ); ?></p>
 			<?php self::repeater( 'footer][legal_links', $s['footer']['legal_links'], 'link' ); ?>
+			<?php self::reset_button( 'footer' ); ?>
 		</section>
 		<?php
 	}
@@ -445,6 +686,7 @@ class MMPCS_Admin {
 					</td>
 				</tr>
 			</table>
+			<?php self::reset_button( 'background' ); ?>
 		</section>
 		<?php
 	}
@@ -474,6 +716,7 @@ class MMPCS_Admin {
 				</tr>
 				<?php endforeach; ?>
 			</table>
+			<?php self::reset_button( 'colors' ); ?>
 		</section>
 		<?php
 	}
