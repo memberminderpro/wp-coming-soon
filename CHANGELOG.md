@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0-beta](https://github.com/memberminderpro/wp-coming-soon/compare/v1.2.0...v1.3.0-beta) (2026-08-19)
+
+
+### Features
+
+* reset controls, saved presets, JSON export and import, with undo ([8ae08bf](https://github.com/memberminderpro/wp-coming-soon/commit/8ae08bf169ac9aaeda9de19c3f36881a8da3ae7c))
+
 ## [1.2.0](https://github.com/memberminderpro/wp-coming-soon/compare/v1.1.1...v1.2.0) (2026-08-19)
 
 
