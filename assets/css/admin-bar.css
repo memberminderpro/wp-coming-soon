@@ -1,0 +1,71 @@
+/*
+ * MMP Coming Soon — admin bar status button.
+ *
+ * Maroon while the coming soon page is off, green while it is live. Hovering
+ * lightens the background and changes nothing else.
+ *
+ * Every selector is anchored on THREE ids (#wpadminbar #wp-toolbar and the
+ * node's own id). That is deliberate. WordPress admin colour schemes style the
+ * label directly with rules like
+ *
+ *   #wpadminbar:not(.mobile) > #wp-toolbar li:hover span.ab-label { color: #e14d43 }
+ *
+ * which is two ids, three classes and two elements. A two-id selector loses to
+ * it on element count and the label turns the scheme's accent colour on hover,
+ * unreadable against this button's background. Three ids wins outright against
+ * anything core ships, without reaching for !important.
+ */
+
+/* ---------- background ---------- */
+
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status > .ab-item {
+	background-color: #8a1c30;
+	font-weight: 600;
+	transition: background-color 0.15s ease;
+}
+
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status.mmpcs-ab--on > .ab-item {
+	background-color: #1e7d46;
+}
+
+/* Hover, the .hover class the admin bar sets in JS, and keyboard focus. */
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status:hover > .ab-item,
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status.hover > .ab-item,
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status > .ab-item:focus {
+	background-color: #a62439;
+}
+
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status.mmpcs-ab--on:hover > .ab-item,
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status.mmpcs-ab--on.hover > .ab-item,
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status.mmpcs-ab--on > .ab-item:focus {
+	background-color: #269a55;
+}
+
+/* ---------- text and icon: white in every state ---------- */
+
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status > .ab-item,
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status > .ab-item:hover,
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status > .ab-item:focus,
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status:hover > .ab-item,
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status.hover > .ab-item,
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status > .ab-item span.ab-label,
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status > .ab-item:hover span.ab-label,
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status > .ab-item:focus span.ab-label,
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status:hover > .ab-item span.ab-label,
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status.hover > .ab-item span.ab-label,
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status > .ab-item .ab-icon::before,
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status:hover > .ab-item .ab-icon::before,
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status.hover > .ab-item .ab-icon::before {
+	color: #fff;
+}
+
+#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status > .ab-item .ab-icon::before {
+	content: "\f488"; /* dashicons-megaphone */
+	top: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	#wpadminbar #wp-toolbar li#wp-admin-bar-mmpcs-status > .ab-item {
+		transition: none;
+	}
+}

@@ -1,0 +1,38 @@
+name: Release Please
+
+# Two release channels, selected by which branch was pushed:
+#   develop -> prerelease config -> "release X.Y.Z-beta" PR -> beta tags
+#   main    -> stable config     -> "release X.Y.Z" PR      -> stable tags
+# Merging a release PR creates the tag, which triggers release.yml (build/publish).
+# The GitHub App token is what allows the created tag to trigger that workflow —
+# events from the default GITHUB_TOKEN do not chain into other workflows. It is
+# also what lets the release PR be opened at all: the organization forbids
+# GitHub Actions from creating pull requests, and the App is a separate identity.
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+      - name: Run Release Please
+        uses: googleapis/release-please-action@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          target-branch: ${{ github.ref_name }}
+          config-file: ${{ github.ref_name == 'main' && 'release-please-config.json' || 'release-please-config.prerelease.json' }}
+          manifest-file: ${{ github.ref_name == 'main' && '.release-please-manifest.json' || '.release-please-manifest.prerelease.json' }}

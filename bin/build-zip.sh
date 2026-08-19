@@ -27,9 +27,10 @@ rsync -a \
 	--exclude '*.zip' \
 	--exclude '.DS_Store' \
 	--exclude 'CHANGELOG.md' \
+	--exclude 'CONTRIBUTING.md' \
 	--exclude 'version.txt' \
-	--exclude 'release-please-config.json' \
-	--exclude '.release-please-manifest.json' \
+	--exclude 'release-please-config*.json' \
+	--exclude '.release-please-manifest*.json' \
 	"${ROOT}/" "${BUILD}/${SLUG}/"
 
 ( cd "$BUILD" && zip -rq "${SLUG}.zip" "$SLUG" )

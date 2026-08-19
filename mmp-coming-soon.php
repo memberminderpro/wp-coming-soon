@@ -4,7 +4,7 @@
  * Plugin URI:        https://memberminderpro.com/
  * Description:       A self-contained coming soon page with an animated aurora background. Replaces the front end for anonymous visitors while the site is being built. No theme, plugin, or framework dependencies.
  * x-release-please-start-version
- * Version:           1.1.1
+ * Version:           1.2.0-beta.1
  * x-release-please-end
  * Requires at least: 6.0
  * Requires PHP:      7.4
@@ -21,12 +21,18 @@
 defined( 'ABSPATH' ) || exit;
 
 // x-release-please-start-version
-define( 'MMPCS_VERSION', '1.1.1' );
+define( 'MMPCS_VERSION', '1.2.0-beta.1' );
 // x-release-please-end
 define( 'MMPCS_FILE', __FILE__ );
 define( 'MMPCS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'MMPCS_URL', plugin_dir_url( __FILE__ ) );
 define( 'MMPCS_OPTION', 'mmpcs_settings' );
+
+/**
+ * The options page slug. Defined here rather than on MMPCS_Admin because the
+ * admin bar renders on the front end too, where that class is not loaded.
+ */
+define( 'MMPCS_MENU_SLUG', 'mmp-coming-soon' );
 
 /**
  * Where update checks look. {channel} becomes "stable" or "beta".
@@ -54,6 +60,7 @@ require_once MMPCS_DIR . 'includes/class-mmpcs-aurora.php';
 require_once MMPCS_DIR . 'includes/class-mmpcs-renderer.php';
 require_once MMPCS_DIR . 'includes/class-mmpcs-frontend.php';
 require_once MMPCS_DIR . 'includes/class-mmpcs-updater.php';
+require_once MMPCS_DIR . 'includes/class-mmpcs-adminbar.php';
 
 if ( is_admin() ) {
 	require_once MMPCS_DIR . 'includes/class-mmpcs-admin.php';
@@ -67,6 +74,7 @@ if ( is_admin() ) {
 function mmpcs_bootstrap() {
 	MMPCS_Frontend::init();
 	MMPCS_Updater::init();
+	MMPCS_Admin_Bar::init();
 
 	if ( is_admin() ) {
 		MMPCS_Admin::init();

@@ -1,4 +1,4 @@
-name: CI
+name: PR quality
 
 on:
   pull_request:
@@ -45,8 +45,8 @@ jobs:
       - name: Build tooling must not ship to customer sites
         run: |
           set -euo pipefail
-          ! unzip -Z1 mmp-coming-soon.zip | grep -E '(^|/)(bin|\.github|docs)/' 
-          ! unzip -Z1 mmp-coming-soon.zip | grep -E 'release-please|version\.txt'
+          ! unzip -Z1 mmp-coming-soon.zip | grep -E '(^|/)(bin|\.github|docs)/'
+          ! unzip -Z1 mmp-coming-soon.zip | grep -E 'release-please|version\.txt|CHANGELOG\.md|CONTRIBUTING\.md'
 
       - name: The plugin header and the runtime constant must agree
         run: |

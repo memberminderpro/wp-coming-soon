@@ -1,106 +1,119 @@
-name: Release
+name: Build and Publish Release
 
-# main    -> stable releases, consumed by every customer site
-# develop -> beta pre-releases, consumed only by sites on the beta channel
+# Fires when release-please's merged release PR creates a v* tag.
+#   beta tags   (v1.2.0-beta) -> build + GitHub prerelease + beta manifest
+#   stable tags (v1.2.0)      -> build + GitHub release, and nothing more
+#
+# Publishing the STABLE manifest is a separate, deliberate human action: the
+# deploy.yml workflow_dispatch. That manifest is what every customer site polls,
+# so writing it is the moment a release reaches customers.
+#
+# The beta manifest is published here rather than gated, because its only
+# consumer is a canary site you control, and a canary that needs a manual
+# dispatch to receive builds is not a canary.
+
 on:
   push:
-    branches: [main, develop]
+    tags:
+      - 'v*'
 
 permissions:
   contents: write
-  pull-requests: write
 
 concurrency:
-  group: release-${{ github.ref_name }}
+  group: release-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  release-please:
-    name: Release PR / tag
-    runs-on: ubuntu-latest
-    outputs:
-      released: ${{ steps.rp.outputs.release_created }}
-      tag: ${{ steps.rp.outputs.tag_name }}
-      version: ${{ steps.rp.outputs.version }}
-    steps:
-      - uses: googleapis/release-please-action@v4
-        id: rp
-        with:
-          target-branch: ${{ github.ref_name }}
-          # develop carries its own config so that the prerelease settings do
-          # not travel to main when develop is merged.
-          config-file: ${{ github.ref_name == 'develop' && '.github/release-please-config.develop.json' || 'release-please-config.json' }}
-          manifest-file: ${{ github.ref_name == 'develop' && '.github/.release-please-manifest.develop.json' || '.release-please-manifest.json' }}
-
-  publish:
-    name: Build and publish
-    needs: release-please
-    if: needs.release-please.outputs.released == 'true'
+  build:
+    name: Build plugin ZIP
     runs-on: ubuntu-latest
     steps:
-      - name: Check out the released tag
+      - name: Checkout the tag
         uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.release-please.outputs.tag }}
 
-      - name: Verify the plugin header matches the tag
+      - name: Set release variables
+        id: vars
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          TAG="$REF_NAME"
+          VERSION="${TAG#v}"
+          # A hyphenated suffix is what makes a version a prerelease; that, not
+          # the branch, decides the channel.
+          case "$VERSION" in
+            *-*) IS_PRERELEASE=true;  CHANNEL=beta ;;
+            *)   IS_PRERELEASE=false; CHANNEL=stable ;;
+          esac
+          {
+            echo "tag=$TAG"
+            echo "version=$VERSION"
+            echo "is_prerelease=$IS_PRERELEASE"
+            echo "channel=$CHANNEL"
+          } >> "$GITHUB_OUTPUT"
+          echo "$TAG -> version $VERSION, $CHANNEL channel, prerelease=$IS_PRERELEASE"
+
+      - name: The plugin header and constant must match the tag
         run: |
           set -euo pipefail
           HEADER="$(grep -m1 -E '^ \* Version:' mmp-coming-soon.php | awk '{print $3}')"
           CONST="$(grep -m1 -E "define\( 'MMPCS_VERSION'" mmp-coming-soon.php | sed -E "s/.*'([^']+)'.*/\1/")"
-          WANT="${{ needs.release-please.outputs.version }}"
+          WANT="${{ steps.vars.outputs.version }}"
           echo "header=$HEADER const=$CONST want=$WANT"
           test "$HEADER" = "$WANT"
           test "$CONST" = "$WANT"
 
       - name: Lint PHP
-        run: |
-          set -euo pipefail
-          find . -name '*.php' -not -path './.git/*' -print0 | xargs -0 -n1 php -l
+        run: find . -name '*.php' -not -path './.git/*' -print0 | xargs -0 -n1 php -l
 
-      - name: Build the plugin zip
+      - name: Build the plugin ZIP
         run: bin/build-zip.sh "${{ github.workspace }}/mmp-coming-soon.zip"
 
-      - name: Attach the zip to the release
+      - name: Create or update the GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload "${{ needs.release-please.outputs.tag }}" mmp-coming-soon.zip --clobber
-
-      - name: Publish the update manifest
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.vars.outputs.tag }}
+          IS_PRERELEASE: ${{ steps.vars.outputs.is_prerelease }}
         run: |
           set -euo pipefail
-
-          if [ "${{ github.ref_name }}" = "main" ]; then
-            CHANNEL=stable
-          else
-            CHANNEL=beta
+          # release-please usually created the release already; create it only
+          # if a tag arrived some other way.
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --title "$TAG" --generate-notes
           fi
+          if [ "$IS_PRERELEASE" = "true" ]; then
+            gh release edit "$TAG" --prerelease
+          else
+            gh release edit "$TAG" --prerelease=false --latest
+          fi
+          # The asset filename is load-bearing: the manifest download_url is a
+          # template ending in mmp-coming-soon.zip, so any other name publishes
+          # a release whose package 404s for every installed site.
+          test -f mmp-coming-soon.zip
+          gh release upload "$TAG" mmp-coming-soon.zip --clobber
 
-          git config --global user.name  "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: The published package URL must resolve
+        env:
+          TAG: ${{ steps.vars.outputs.tag }}
+        run: |
+          set -euo pipefail
+          URL="https://github.com/${{ github.repository }}/releases/download/${TAG}/mmp-coming-soon.zip"
+          for attempt in 1 2 3 4 5 6; do
+            CODE="$(curl -sSL -o /tmp/pkg.zip -w '%{http_code}' "$URL" || true)"
+            if [ "$CODE" = "200" ] && unzip -tq /tmp/pkg.zip >/dev/null 2>&1; then
+              test "$(unzip -Z1 /tmp/pkg.zip | cut -d/ -f1 | sort -u)" = "mmp-coming-soon"
+              echo "package downloadable and correctly structured"
+              exit 0
+            fi
+            echo "attempt $attempt: HTTP $CODE, retrying"
+            sleep 10
+          done
+          echo "::error::the release package is not downloadable at $URL"
+          exit 1
 
-          # The manifests branch is orphaned on purpose: nothing merges into it,
-          # so a develop-to-main merge can never advertise a beta build to
-          # stable sites.
-          git clone --depth 1 --branch manifests \
-            "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" manifests-branch \
-            || {
-              git clone --depth 1 "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" manifests-branch
-              cd manifests-branch
-              git checkout --orphan manifests
-              git rm -rf . >/dev/null 2>&1 || true
-              cd ..
-            }
-
-          python3 bin/manifest.py "$CHANNEL" \
-            "${{ needs.release-please.outputs.version }}" \
-            "${{ github.repository }}" \
-            "manifests-branch/${CHANNEL}.json"
-
-          cd manifests-branch
-          git add "${CHANNEL}.json"
-          git diff --cached --quiet && { echo "manifest unchanged"; exit 0; }
-          git commit -m "chore: publish ${CHANNEL} manifest ${{ needs.release-please.outputs.version }}"
-          git push origin manifests
+      - name: Publish the beta manifest
+        if: steps.vars.outputs.channel == 'beta'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bin/publish-manifest.sh beta "${{ steps.vars.outputs.version }}" "${{ github.repository }}"

@@ -5,7 +5,7 @@
 | Branch | Meaning |
 | --- | --- |
 | `main` | Production. Every customer site on the stable channel tracks it. |
-| `develop` | Integration. Cutting a release here produces a `-beta.N` pre-release. |
+| `develop` | Integration. Cutting a release here produces a `-beta` pre-release. |
 | `manifests` | Machine-written update manifests. Never merge anything into it. |
 
 Work happens on a branch off `develop` and reaches `main` only through
@@ -30,16 +30,30 @@ not cut a release, and the reason is not obvious.
 
 ## Releasing
 
-You do not edit version numbers. Merging into `develop` or `main` opens a
-release pull request; merging *that* tags the release, attaches the zip, and
-publishes the manifest.
+You do not edit version numbers, run any local command, or create any tag.
+Everything happens in GitHub Actions; your part is merging and, for production,
+pressing the go-button.
+
+1. Merge your PR into `develop`.
+2. release-please opens a release PR against `develop`. Merge it. That tags a
+   pre-release, builds the zip, and publishes the beta manifest — the canary
+   site updates.
+3. Open a PR from `develop` into `main` and merge it.
+4. release-please opens a release PR against `main`. Merge it. That tags and
+   builds the stable release. **Nothing has shipped yet.**
+5. Actions tab → **Deploy Release to Customer Sites** → Run workflow → enter
+   the stable tag. That publishes the stable manifest, and customer sites take
+   the update.
+
+Steps 4 and 5 are separate on purpose. Merging a release PR must never be the
+thing that reaches customers.
 
 Never hand-edit:
 
 * the version in `mmp-coming-soon.php` (two annotated blocks)
 * `CHANGELOG.md`
 * `version.txt`
-* `.release-please-manifest.json` or its develop counterpart
+* `.release-please-manifest.json` or `.release-please-manifest.prerelease.json`
 * anything on the `manifests` branch
 
 ## Before you open a pull request
