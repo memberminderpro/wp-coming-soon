@@ -105,13 +105,25 @@
 
 .mmpcs-row {
 	display: flex;
-	flex-wrap: wrap;
-	align-items: flex-end;
+	align-items: flex-start;
 	gap: 0.75rem;
 	padding: 0.75rem;
 	border: 1px solid #dcdcde;
 	border-radius: 4px;
 	background: #f6f7f7;
+}
+
+/*
+ * The fields wrap inside their own box, so the move and remove controls stay
+ * put at either end instead of being carried along by the wrapping.
+ */
+.mmpcs-row__fields {
+	display: flex;
+	flex: 1 1 auto;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	gap: 0.75rem;
+	min-inline-size: 0;
 }
 
 /*
@@ -341,17 +353,41 @@
 	padding-bottom: 0;
 }
 
+/*
+ * Two fixed rows -- caption, then control -- rather than a column that packs to
+ * its own content. Fields on one wrapped line then put their captions on the
+ * same baseline and their inputs on the next, whatever else a field carries
+ * below it. Aligning to flex-end instead let a tall field (the image, with its
+ * Choose button) drag its neighbours' captions out of line.
+ */
 .mmpcs-field {
-	display: flex;
-	flex-direction: column;
+	display: grid;
+	grid-template-rows: 1.4rem auto;
+	align-content: start;
 	gap: 0.25rem;
 	flex: 1 1 12rem;
 	min-inline-size: 0;
 }
 
+.mmpcs-field > span:first-child {
+	align-self: end;
+}
+
 /* The announcement is a sentence, so it takes a line of its own. */
 .mmpcs-announce {
 	flex: 1 0 100%;
+	margin: 0;
+}
+
+/*
+ * Drop the move and remove controls to the height of the first control, past
+ * the captions. Scoped away from the colour rows and the logo rows, which have
+ * no captions to clear -- there the offset would just knock them out of line.
+ */
+.mmpcs-row:not(.mmpcs-row--color):not(.mmpcs-row--logo) > .mmpcs-move,
+.mmpcs-row:not(.mmpcs-row--color):not(.mmpcs-row--logo) > .mmpcs-remove {
+	align-self: flex-start;
+	margin-block-start: 1.6rem;
 }
 
 .mmpcs-field--wide {
@@ -561,7 +597,13 @@
  * opening the preview pane triggers it exactly as narrowing the window does.
  */
 @container mmpcs-settings (max-width: 46rem) {
-	.mmpcs-row {
+	/*
+	 * Both boxes: the row holds the move and remove controls, the inner box
+	 * holds the fields. Stacking only the outer one leaves the fields side by
+	 * side, which is the thing this rule exists to stop.
+	 */
+	.mmpcs-row,
+	.mmpcs-row__fields {
 		flex-direction: column;
 		align-items: stretch;
 	}

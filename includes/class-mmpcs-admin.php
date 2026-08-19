@@ -897,6 +897,7 @@ class MMPCS_Admin {
 				<button type="button" class="button-link mmpcs-up" aria-label="<?php esc_attr_e( 'Move up', 'mmp-coming-soon' ); ?>"><span class="dashicons dashicons-arrow-up-alt2"></span></button>
 				<button type="button" class="button-link mmpcs-down" aria-label="<?php esc_attr_e( 'Move down', 'mmp-coming-soon' ); ?>"><span class="dashicons dashicons-arrow-down-alt2"></span></button>
 			</span>
+			<span class="mmpcs-row__fields">
 			<label class="mmpcs-field">
 				<span><?php echo $is_button ? esc_html__( 'Name', 'mmp-coming-soon' ) : esc_html__( 'Label', 'mmp-coming-soon' ); ?></span>
 				<input type="text" data-button-name name="<?php echo esc_attr( $field_base ); ?>[<?php echo $is_button ? 'name' : 'label'; ?>]" value="<?php echo esc_attr( $is_button ? $name : $label ); ?>">
@@ -974,6 +975,7 @@ class MMPCS_Admin {
 			</label>
 			<p class="mmpcs-announce" data-button-announce aria-live="polite" hidden></p>
 			<?php endif; ?>
+			</span>
 			<button type="button" class="button-link mmpcs-remove" aria-label="<?php esc_attr_e( 'Remove row', 'mmp-coming-soon' ); ?>"><span class="dashicons dashicons-no-alt"></span></button>
 		</div>
 		<?php
