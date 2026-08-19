@@ -5,12 +5,25 @@ name: Release
 on:
   push:
     branches: [main, develop]
+  # Re-publish an existing tag. Needed when a release was tagged but its
+  # package or manifest did not get published, so that recovery does not
+  # require deleting and recreating the release.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to publish, e.g. v1.2.0-beta"
+        required: true
+        type: string
 
 # Deliberately no pull-requests permission. This workflow only tags and
 # publishes a release that a human already reviewed and merged; opening the
 # release pull request is a developer step, not an unattended one.
 permissions:
   contents: write
+  # Lets release-please comment on and relabel the release pull request it just
+  # released. This does NOT allow opening pull requests — that needs
+  # pull-requests: write, which is deliberately withheld.
+  issues: write
 
 concurrency:
   group: release-${{ github.ref_name }}
@@ -19,6 +32,7 @@ concurrency:
 jobs:
   release-please:
     name: Tag the merged release
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     outputs:
       released: ${{ steps.rp.outputs.release_created }}
@@ -41,20 +55,40 @@ jobs:
   publish:
     name: Build and publish
     needs: release-please
-    if: needs.release-please.outputs.released == 'true'
+    if: |
+      always() &&
+      (github.event_name == 'workflow_dispatch' || needs.release-please.outputs.released == 'true')
     runs-on: ubuntu-latest
     steps:
+      - name: Resolve the tag, version and channel
+        id: rel
+        run: |
+          set -euo pipefail
+          TAG="${{ github.event.inputs.tag || needs.release-please.outputs.tag }}"
+          test -n "$TAG"
+          VERSION="${TAG#v}"
+          # A prerelease version carries a hyphenated suffix; that, not the
+          # branch, is what decides which channel the manifest belongs to.
+          case "$VERSION" in
+            *-*) CHANNEL=beta ;;
+            *)   CHANNEL=stable ;;
+          esac
+          echo "tag=$TAG"         >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "channel=$CHANNEL" >> "$GITHUB_OUTPUT"
+          echo "publishing $TAG as $VERSION on the $CHANNEL channel"
+
       - name: Check out the released tag
         uses: actions/checkout@v4
         with:
-          ref: ${{ needs.release-please.outputs.tag }}
+          ref: ${{ steps.rel.outputs.tag }}
 
       - name: Verify the plugin header matches the tag
         run: |
           set -euo pipefail
           HEADER="$(grep -m1 -E '^ \* Version:' mmp-coming-soon.php | awk '{print $3}')"
           CONST="$(grep -m1 -E "define\( 'MMPCS_VERSION'" mmp-coming-soon.php | sed -E "s/.*'([^']+)'.*/\1/")"
-          WANT="${{ needs.release-please.outputs.version }}"
+          WANT="${{ steps.rel.outputs.version }}"
           echo "header=$HEADER const=$CONST want=$WANT"
           test "$HEADER" = "$WANT"
           test "$CONST" = "$WANT"
@@ -76,14 +110,14 @@ jobs:
           # template ending in mmp-coming-soon.zip, so any other name publishes
           # a release whose package 404s for every installed site.
           test -f mmp-coming-soon.zip
-          gh release upload "${{ needs.release-please.outputs.tag }}" mmp-coming-soon.zip --clobber
+          gh release upload "${{ steps.rel.outputs.tag }}" mmp-coming-soon.zip --clobber
 
       - name: The published package URL must resolve
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          URL="https://github.com/${{ github.repository }}/releases/download/${{ needs.release-please.outputs.tag }}/mmp-coming-soon.zip"
+          URL="https://github.com/${{ github.repository }}/releases/download/${{ steps.rel.outputs.tag }}/mmp-coming-soon.zip"
           echo "checking $URL"
           # Release assets take a few seconds to become downloadable.
           for attempt in 1 2 3 4 5 6; do
@@ -106,11 +140,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [ "${{ github.ref_name }}" = "main" ]; then
-            CHANNEL=stable
-          else
-            CHANNEL=beta
-          fi
+          CHANNEL="${{ steps.rel.outputs.channel }}"
 
           git config --global user.name  "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -129,12 +159,12 @@ jobs:
             }
 
           python3 bin/manifest.py "$CHANNEL" \
-            "${{ needs.release-please.outputs.version }}" \
+            "${{ steps.rel.outputs.version }}" \
             "${{ github.repository }}" \
             "manifests-branch/${CHANNEL}.json"
 
           cd manifests-branch
           git add "${CHANNEL}.json"
           git diff --cached --quiet && { echo "manifest unchanged"; exit 0; }
-          git commit -m "chore: publish ${CHANNEL} manifest ${{ needs.release-please.outputs.version }}"
+          git commit -m "chore: publish ${CHANNEL} manifest ${{ steps.rel.outputs.version }}"
           git push origin manifests
