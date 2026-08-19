@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0-beta.1](https://github.com/memberminderpro/wp-coming-soon/compare/v1.2.0-beta...v1.2.0-beta.1) (2026-08-19)
+
+
+### Bug Fixes
+
+* admin bar button opens the settings page and stays readable on hover ([#9](https://github.com/memberminderpro/wp-coming-soon/issues/9)) ([eb577ad](https://github.com/memberminderpro/wp-coming-soon/commit/eb577ad0da1f032bd0ecb6a8d32024357d6026ee))
+
 ## [1.2.0-beta](https://github.com/memberminderpro/wp-coming-soon/compare/v1.1.1...v1.2.0-beta) (2026-08-19)
 
 
