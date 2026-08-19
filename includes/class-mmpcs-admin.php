@@ -948,7 +948,7 @@ class MMPCS_Admin {
 					<?php endforeach; ?>
 				</select>
 			</label>
-			<p class="mmpcs-announce" data-button-announce aria-live="polite"></p>
+			<p class="mmpcs-announce" data-button-announce aria-live="polite" hidden></p>
 			<?php endif; ?>
 			<button type="button" class="button-link mmpcs-remove" aria-label="<?php esc_attr_e( 'Remove row', 'mmp-coming-soon' ); ?>"><span class="dashicons dashicons-no-alt"></span></button>
 		</div>

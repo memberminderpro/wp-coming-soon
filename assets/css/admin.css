@@ -82,8 +82,30 @@
 	margin-bottom: 0.75rem;
 }
 
+/*
+ * Every rule in this file that sets display beats the browser's own
+ * [hidden] { display: none }, because a class selector outranks it. That is why
+ * the button rows' optional fields and the logos' shared-slot controls stayed
+ * on screen while their toggles happily reported themselves as off. Stated once,
+ * loudly, so hiding a thing keeps working however it is styled later.
+ */
+[hidden] {
+	display: none !important;
+}
+
+/*
+ * Rows lay out against the width of the settings column, not the viewport --
+ * the live preview takes half the screen on a wide monitor, so a viewport query
+ * would keep these fields side by side long after they had stopped fitting.
+ */
+.mmpcs-form {
+	container-type: inline-size;
+	container-name: mmpcs-settings;
+}
+
 .mmpcs-row {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: flex-end;
 	gap: 0.75rem;
 	padding: 0.75rem;
@@ -297,6 +319,12 @@
 	flex-direction: column;
 	gap: 0.25rem;
 	flex: 1 1 12rem;
+	min-inline-size: 0;
+}
+
+/* The announcement is a sentence, so it takes a line of its own. */
+.mmpcs-announce {
+	flex: 1 0 100%;
 }
 
 .mmpcs-field--wide {
@@ -497,5 +525,76 @@
 
 .mmpcs-preview.is-collapsed .mmpcs-preview__stage,
 .mmpcs-preview.is-collapsed .mmpcs-preview__note {
+	display: none;
+}
+
+/*
+ * Narrow settings column: one field per line, full width, rather than a row of
+ * inputs squeezed to a couple of characters each. Keyed to the container, so
+ * opening the preview pane triggers it exactly as narrowing the window does.
+ */
+@container mmpcs-settings (max-width: 46rem) {
+	.mmpcs-row {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.mmpcs-field,
+	.mmpcs-field--wide,
+	.mmpcs-field--narrow {
+		flex: 1 1 auto;
+	}
+
+	.mmpcs-chips {
+		align-self: flex-start;
+		padding-bottom: 0;
+	}
+
+	.mmpcs-move {
+		display: flex;
+		gap: 0.5rem;
+		margin-left: 0;
+	}
+}
+
+/* ---------- collapsed preview gives its width back ---------- */
+
+/*
+ * Collapsing has to return the space, not just the height: a pane that folds to
+ * a title bar still holds a whole column hostage. Collapsed, it is a rail with
+ * one icon, and the settings take the rest.
+ */
+@media (min-width: 1200px) and (orientation: landscape) {
+	.mmpcs-layout.is-preview-collapsed {
+		grid-template-columns: minmax(0, 1fr) 3rem;
+	}
+}
+
+.mmpcs-preview.is-collapsed {
+	position: sticky;
+	top: 46px;
+}
+
+.mmpcs-preview.is-collapsed .mmpcs-preview__bar {
+	flex-direction: column;
+	gap: 0.5rem;
+	padding: 0.5rem 0;
+	border-bottom: 0;
+}
+
+/* In the rail, the button is the icon; its text still names it for a reader. */
+.mmpcs-preview.is-collapsed .mmpcs-preview__toggle span:not(.dashicons) {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+.mmpcs-preview.is-collapsed .mmpcs-preview__state,
+.mmpcs-preview.is-collapsed [data-preview-popout] {
 	display: none;
 }

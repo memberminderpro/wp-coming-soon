@@ -455,11 +455,19 @@
 
 		out.classList.remove( 'is-warning' );
 
-		if ( ! name ) {
+		/*
+		 * With no image and no separate text, the button says its own name and
+		 * the line would only ever repeat the field above it. Silence is the
+		 * better default; the line appears when the two can disagree.
+		 */
+		if ( ! name || ( ! hasImage && ! label ) ) {
 			out.textContent = '';
+			out.hidden = true;
 
 			return;
 		}
+
+		out.hidden = false;
 
 		if ( hasImage || ! label ) {
 			out.textContent = ( strings.announced || '%s' ).replace( '%s', name );
@@ -846,9 +854,24 @@
 		var frame  = pane.querySelector( '[data-preview-frame]' );
 
 		// Collapsed state is a preference, so it outlives the page.
+		var layout    = document.querySelector( '[data-mmpcs-layout]' );
 		var collapsed = 'false' === window.localStorage.getItem( STORAGE_KEY );
 
-		pane.classList.toggle( 'is-collapsed', collapsed );
+		/**
+		 * Reflect the collapsed state on both the pane and the grid around it.
+		 * The grid is what actually hands the width back to the settings.
+		 *
+		 * @param {boolean} isCollapsed Whether the pane is collapsed.
+		 */
+		function applyCollapsed( isCollapsed ) {
+			pane.classList.toggle( 'is-collapsed', isCollapsed );
+
+			if ( layout ) {
+				layout.classList.toggle( 'is-preview-collapsed', isCollapsed );
+			}
+		}
+
+		applyCollapsed( collapsed );
 
 		if ( toggle ) {
 			toggle.setAttribute( 'aria-expanded', collapsed ? 'false' : 'true' );
@@ -856,7 +879,7 @@
 			toggle.addEventListener( 'click', function () {
 				var nowCollapsed = ! pane.classList.contains( 'is-collapsed' );
 
-				pane.classList.toggle( 'is-collapsed', nowCollapsed );
+				applyCollapsed( nowCollapsed );
 				toggle.setAttribute( 'aria-expanded', nowCollapsed ? 'false' : 'true' );
 				window.localStorage.setItem( STORAGE_KEY, nowCollapsed ? 'false' : 'true' );
 
