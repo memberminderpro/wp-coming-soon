@@ -180,6 +180,15 @@ class MMPCS_Updater {
 			}
 		}
 
+		// Never make a visitor wait on GitHub. The update transient this class
+		// filters can be read during a front-end request, and a cold cache
+		// there would put a blocking ten-second HTTP call in the middle of
+		// someone's page load. Refresh only where WordPress itself refreshes
+		// its update data.
+		if ( ! $force && ! self::may_fetch() ) {
+			return null;
+		}
+
 		$response = wp_remote_get(
 			add_query_arg( 'cb', time(), self::manifest_url() ),
 			array(
@@ -224,6 +233,19 @@ class MMPCS_Updater {
 		set_transient( self::cache_key(), $data, self::CACHE_TTL );
 
 		return $data;
+	}
+
+	/**
+	 * May this request go out to the network to refresh the manifest?
+	 *
+	 * @return bool
+	 */
+	private static function may_fetch() {
+		if ( is_admin() || wp_doing_cron() ) {
+			return true;
+		}
+
+		return defined( 'WP_CLI' ) && WP_CLI;
 	}
 
 	/**
