@@ -2,7 +2,7 @@
   "name": "MMP Coming Soon",
   "slug": "mmp-coming-soon",
   "channel": "beta",
-  "version": "1.4.0-beta.12",
+  "version": "1.4.0-beta.13",
   "requires": "6.0",
   "tested": "7.0",
   "requires_php": "7.4",
@@ -10,7 +10,7 @@
   "homepage": "https://github.com/memberminderpro/wp-coming-soon",
   "download_url": "https://github.com/memberminderpro/wp-coming-soon/releases/download/v{version}/mmp-coming-soon.zip",
   "changelog_url": "https://raw.githubusercontent.com/memberminderpro/wp-coming-soon/develop/CHANGELOG.md",
-  "last_updated": "2026-08-19 22:21:38",
+  "last_updated": "2026-08-19 22:37:06",
   "sections": {
     "description": "A self-contained coming soon page with an animated aurora background. Replaces the front end for anonymous visitors while the site is being built. No theme, plugin, or framework dependencies."
   }
