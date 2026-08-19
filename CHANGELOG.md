@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0-beta.13](https://github.com/memberminderpro/wp-coming-soon/compare/v1.4.0-beta.12...v1.4.0-beta.13) (2026-08-19)
+
+
+### Bug Fixes
+
+* keep the preset actions on one line and the table intact ([#47](https://github.com/memberminderpro/wp-coming-soon/issues/47)) ([735fd6f](https://github.com/memberminderpro/wp-coming-soon/commit/735fd6fc7a1bc10f4a1a30a060a0b14979fe1156))
+
 ## [1.4.0-beta.12](https://github.com/memberminderpro/wp-coming-soon/compare/v1.4.0-beta.11...v1.4.0-beta.12) (2026-08-19)
 
 
