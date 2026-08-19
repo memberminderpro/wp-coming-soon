@@ -35,11 +35,17 @@
 			} );
 		} );
 
+		var requested = new URLSearchParams( window.location.search ).get( 'mmpcs_tab' );
 		var saved;
-		try {
-			saved = window.localStorage.getItem( 'mmpcsTab' );
-		} catch ( e ) {
-			saved = null;
+
+		if ( requested ) {
+			saved = requested;
+		} else {
+			try {
+				saved = window.localStorage.getItem( 'mmpcsTab' );
+			} catch ( e ) {
+				saved = null;
+			}
 		}
 
 		if ( saved ) {
@@ -228,8 +234,22 @@
 		} );
 	}
 
+	/**
+	 * Confirm anything destructive before it submits.
+	 */
+	function initConfirms() {
+		document.querySelectorAll( '[data-confirm]' ).forEach( function ( el ) {
+			el.addEventListener( 'click', function ( event ) {
+				if ( ! window.confirm( el.dataset.confirm ) ) {
+					event.preventDefault();
+				}
+			} );
+		} );
+	}
+
 	$( function () {
 		initTabs();
+		initConfirms();
 		initColors();
 		initRanges();
 		initRepeaters();

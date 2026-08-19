@@ -64,6 +64,7 @@ require_once MMPCS_DIR . 'includes/class-mmpcs-adminbar.php';
 
 if ( is_admin() ) {
 	require_once MMPCS_DIR . 'includes/class-mmpcs-admin.php';
+	require_once MMPCS_DIR . 'includes/class-mmpcs-tools.php';
 }
 
 /**
@@ -78,6 +79,7 @@ function mmpcs_bootstrap() {
 
 	if ( is_admin() ) {
 		MMPCS_Admin::init();
+		MMPCS_Tools::init();
 	}
 }
 add_action( 'plugins_loaded', 'mmpcs_bootstrap' );
