@@ -107,6 +107,7 @@ class MMPCS_Renderer {
 </section>
 <script src="<?php echo esc_url( add_query_arg( 'ver', $version, MMPCS_URL . 'assets/js/coming-soon.js' ) ); ?>" defer></script>
 <?php if ( $is_preview ) : ?>
+<script src="<?php echo esc_url( add_query_arg( 'ver', $version, MMPCS_URL . 'assets/js/preview-bridge.js' ) ); ?>" defer></script>
 <div class="mmpcs-preview-flag" role="status"><?php
 	echo empty( $s['enabled'] )
 		? esc_html__( 'Preview — visitors are still seeing your site.', 'mmp-coming-soon' )
