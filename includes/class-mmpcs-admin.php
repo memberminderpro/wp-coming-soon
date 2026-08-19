@@ -201,6 +201,7 @@ class MMPCS_Admin {
 				self::panel_footer( $s );
 				self::panel_background( $s );
 				self::panel_colors( $s );
+				self::panel_presets( $s );
 				self::panel_updates( $s );
 				?>
 
@@ -211,11 +212,15 @@ class MMPCS_Admin {
 			</div>
 
 			<?php
-			// Rendered outside the settings form: these act immediately and
-			// each needs its own nonce. Buttons inside the panels above reach
-			// them with the HTML5 form attribute rather than nesting forms,
-			// which is invalid markup.
-			self::panel_presets( $s );
+			/*
+			 * The tool forms are rendered outside the settings form: each acts
+			 * immediately and carries its own nonce, and a form cannot be
+			 * nested inside another. The controls that drive them sit in the
+			 * Presets panel above and reach them with the HTML5 form
+			 * attribute, which is also what lets that panel live inside the
+			 * settings form -- where the tabs expect to find it -- without any
+			 * of its fields being submitted along with the settings.
+			 */
 			self::tool_forms();
 			?>
 		</div>
