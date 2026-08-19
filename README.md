@@ -25,12 +25,51 @@ original component when it moved between sites configured at `62.5%` and `100%`.
 | Tab | What it controls |
 | --- | --- |
 | Visibility | The on/off switch and the always-public path allowlist |
-| Content | Logo image, alt text, link, ARIA label, width; badge, heading, description |
-| Buttons | Main and support button repeaters — label, link, style per row |
+| Content | The logo repeater and its placements; badge, heading, description |
+| Buttons | Main and support button repeaters — name, link, style, optional button text and image per row |
 | Footer | Company name and link, legal text, legal-link repeater |
 | Background | Aurora on/off, motion, base colour, blob colours, size, blur, speed, intensity |
 | Colors | Accent, accent hover, button text, navy, crimson, off-white |
 | Updates | Version status, update channel, a manual check, and the automatic-update switch |
+
+### Buttons
+
+Every button has a **name**, and that is all most buttons need: it is the text on
+the button, and it is what the link is called to a screen reader.
+
+Two optional extras sit behind icons beside the name, so a plain button is three
+fields rather than six:
+
+* **Button text** — show something shorter or different from the name.
+* **Image** — use an image instead of text. The name becomes its alt text, and
+  the style control disappears, because a fill and a border around a badge that
+  carries its own shape is chrome on top of chrome.
+
+Where the name and the visible text differ, the name is used as the link's
+accessible name **only if it contains the visible text** — "Learn more about
+hosting" over a button reading "Learn more" is fine; "Hosting CTA" is not, and is
+ignored. That is WCAG 2.5.3, and the reason is practical: someone using voice
+control says what they can see, so an accessible name that replaces the visible
+text makes the button unreachable. The settings screen shows what will be
+announced as you type, and warns when a name is being ignored.
+
+### Logos
+
+There is no primary logo. Every logo is a row in one repeater, and each row
+chooses its own slot: the top of the page, below the badge, the heading, the
+description or the buttons, or above the footer text. Row order is display
+order, so several logos assigned to the same slot render together in the order
+you arrange them — which is what turns the feature into a sponsor or partner
+block, anywhere on the page.
+
+Where a slot holds more than one logo, it can arrange them side by side
+(wrapping and centred, the default) or stacked. Width is per logo, so a wide
+wordmark and a square badge can sit in the same row; picking an image from the
+media library shows its natural width as a starting point.
+
+Alt text and the link's ARIA label are separate fields, because they do
+different jobs: alt describes the image, and the ARIA label names where the
+link goes.
 
 **Preview page** opens the holding page in a new tab even while the gate is off.
 

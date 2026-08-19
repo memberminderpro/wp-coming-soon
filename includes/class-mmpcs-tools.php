@@ -32,7 +32,7 @@ class MMPCS_Tools {
 	 * @return void
 	 */
 	public static function init() {
-		$actions = array( 'reset', 'undo', 'preset_save', 'preset_apply', 'preset_delete', 'export', 'import' );
+		$actions = array( 'reset', 'undo', 'preset_save', 'preset_apply', 'preset_delete', 'preset_export', 'export', 'import' );
 
 		foreach ( $actions as $action ) {
 			add_action( 'admin_post_mmpcs_' . $action, array( __CLASS__, 'handle_' . $action ) );
@@ -166,6 +166,45 @@ class MMPCS_Tools {
 	 *
 	 * @return void
 	 */
+	/**
+	 * Download one preset as a settings file.
+	 *
+	 * Deliberately the same shape as the full export, so a downloaded preset is
+	 * importable anywhere the full export is -- a preset that can only be read
+	 * back by the site that wrote it is not portable, it is just a backup.
+	 *
+	 * @return void
+	 */
+	public static function handle_preset_export() {
+		self::guard( 'preset_export' );
+
+		$name   = isset( $_POST['preset_name'] ) ? sanitize_text_field( wp_unslash( $_POST['preset_name'] ) ) : '';
+		$preset = '' === $name ? false : MMPCS_Settings::get_preset( $name );
+
+		if ( ! $preset || empty( $preset['data'] ) ) {
+			self::back( 'preset_missing', 'presets' );
+		}
+
+		$payload = array(
+			'_type'       => self::FILE_TYPE,
+			'_version'    => MMPCS_VERSION,
+			'exported_at' => gmdate( 'c' ),
+			'site'        => home_url( '/' ),
+			// Kept so a downloaded preset arrives back under the name it left.
+			'preset'      => $preset['name'],
+			'settings'    => $preset['data'],
+		);
+
+		$file = sanitize_file_name( 'coming-soon-' . $preset['name'] . '-' . gmdate( 'Y-m-d' ) . '.json' );
+
+		nocache_headers();
+		header( 'Content-Type: application/json; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="' . $file . '"' );
+
+		echo wp_json_encode( $payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
+		exit;
+	}
+
 	public static function handle_export() {
 		self::guard( 'export' );
 

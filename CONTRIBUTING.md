@@ -35,9 +35,15 @@ Everything happens in GitHub Actions; your part is merging and, for production,
 pressing the go-button.
 
 1. Merge your PR into `develop`.
-2. release-please opens a release PR against `develop`. Merge it. That tags a
-   pre-release, builds the zip, and publishes the beta manifest — the canary
-   site updates.
+2. release-please opens a release PR against `develop`. **It merges itself**
+   once the checks pass, tagging a pre-release, building the zip and publishing
+   the beta manifest, so the canary site updates without anyone clicking
+   anything. That PR is a rubber stamp — its only consumer is a site you
+   control — and the merge that matters is step 4, which stays manual for ever.
+
+   If a beta release PR is sitting there unmerged, check the *Auto-merge beta
+   release PRs* workflow: it warns and stops when the repository's auto-merge
+   setting is off, and merging by hand still works.
 3. Open a PR from `develop` into `main` and merge it.
 4. release-please opens a release PR against `main`. Merge it. That tags and
    builds the stable release. **Nothing has shipped yet.**
@@ -47,6 +53,27 @@ pressing the go-button.
 
 Steps 4 and 5 are separate on purpose. Merging a release PR must never be the
 thing that reaches customers.
+
+### After every stable release
+
+Two chores, both easy to forget and both with confusing symptoms:
+
+1. **Back-merge `main` into `develop`.** Otherwise develop's `CHANGELOG.md`
+   lacks the entry main just gained. The next beta release edits develop's
+   changelog too, both sides differ, and the next promotion conflicts.
+2. **Baseline `.release-please-manifest.prerelease.json` on the released
+   version.** Otherwise release-please keeps incrementing the *old* version's
+   prerelease: after `1.2.0` ships you get `1.2.0-beta.2`, which sorts **below**
+   the `1.2.0` already in production while containing more than it. The beta
+   channel must always lead stable, never trail it.
+
+Do both in one pull request:
+
+```sh
+git checkout -B sync/post-X.Y.Z origin/develop
+git merge origin/main
+printf '{\n  ".": "X.Y.Z"\n}\n' > .release-please-manifest.prerelease.json
+```
 
 Never hand-edit:
 

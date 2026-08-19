@@ -85,26 +85,29 @@ class MMPCS_Renderer {
 <?php echo MMPCS_Aurora::markup( $s['aurora'] ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
 <section class="coming-soon">
 	<main class="coming-soon__main">
-		<?php echo self::logo( $s['logo'] ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
+		<?php echo self::logo_group( $s, 'top' ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
 		<?php if ( '' !== $s['badge_text'] ) : ?>
 		<h1 class="coming-soon__badge"><?php echo esc_html( $s['badge_text'] ); ?></h1>
 		<?php endif; ?>
+		<?php echo self::logo_group( $s, 'after_badge' ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
 		<?php if ( '' !== $s['heading'] ) : ?>
 		<p class="coming-soon__title"><?php echo esc_html( $s['heading'] ); ?></p>
 		<?php endif; ?>
-		<?php if ( '' !== $s['description'] ) : ?>
-		<p class="coming-soon__subtitle"><?php echo esc_html( $s['description'] ); ?></p>
-		<?php endif; ?>
+		<?php echo self::logo_group( $s, 'after_heading' ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
+		<?php echo self::description( $s['description'] ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
+		<?php echo self::logo_group( $s, 'after_description' ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
 		<div class="coming-soon__divider"></div>
 		<div class="coming-soon__actions">
 			<?php echo self::button_row( $s['buttons_main'], false ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
 			<?php echo self::button_row( $s['buttons_support'], true ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
 		</div>
+		<?php echo self::logo_group( $s, 'after_buttons' ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
 	</main>
-	<?php echo self::footer( $s['footer'] ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
+	<?php echo self::footer( $s['footer'], self::logo_group( $s, 'above_footer' ) ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- escaped in builder. ?>
 </section>
 <script src="<?php echo esc_url( add_query_arg( 'ver', $version, MMPCS_URL . 'assets/js/coming-soon.js' ) ); ?>" defer></script>
 <?php if ( $is_preview ) : ?>
+<script src="<?php echo esc_url( add_query_arg( 'ver', $version, MMPCS_URL . 'assets/js/preview-bridge.js' ) ); ?>" defer></script>
 <div class="mmpcs-preview-flag" role="status"><?php
 	echo empty( $s['enabled'] )
 		? esc_html__( 'Preview — visitors are still seeing your site.', 'mmp-coming-soon' )
@@ -133,7 +136,6 @@ class MMPCS_Renderer {
 			'--mmpcs-navy'         => $p['navy'],
 			'--mmpcs-crimson'      => $p['crimson'],
 			'--mmpcs-offwhite'     => $p['offwhite'],
-			'--mmpcs-logo-width'   => (int) $s['logo']['width'] . 'px',
 			'--mmpcs-page-bg'      => ! empty( $s['aurora']['enabled'] ) ? $s['aurora']['base'] : $p['ink'],
 		);
 
@@ -147,9 +149,96 @@ class MMPCS_Renderer {
 	}
 
 	/**
-	 * Logo block. Renders nothing when no image is configured.
+	 * The description, as one paragraph per blank-line-separated block.
 	 *
-	 * @param array $logo Logo settings.
+	 * The field has always been a textarea and sanitize_textarea_field has
+	 * always kept the newlines, but the renderer used to pour the whole string
+	 * into a single <p>, where HTML collapses the whitespace -- so a break the
+	 * author typed and saved silently vanished on the page.
+	 *
+	 * @param string $description Raw description text.
+	 * @return string
+	 */
+	private static function description( $description ) {
+		$description = trim( (string) $description );
+
+		if ( '' === $description ) {
+			return '';
+		}
+
+		// Normalise line endings first, so a paste from Windows or an old Mac
+		// splits on the same rule as a paste from anywhere else.
+		$description = str_replace( array( "\r\n", "\r" ), "\n", $description );
+
+		// A blank line starts a new paragraph; a lone newline is a line break
+		// inside one, which is what someone typing into a textarea expects.
+		$blocks = preg_split( '/\n\s*\n/', $description );
+		$out    = '';
+
+		foreach ( $blocks as $block ) {
+			$block = trim( $block );
+
+			if ( '' === $block ) {
+				continue;
+			}
+
+			$out .= '<p class="coming-soon__subtitle">' . nl2br( esc_html( $block ) ) . '</p>';
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Every logo assigned to one slot, in repeater order.
+	 *
+	 * Called at each slot in turn, returning nothing for the slots that hold no
+	 * logos, which keeps the placement rules here rather than scattered through
+	 * the markup. Row order is display order, so ordering needs no stored
+	 * weight -- moving a row in the repeater moves it on the page.
+	 *
+	 * @param array  $s    Settings.
+	 * @param string $slot Slot being rendered.
+	 * @return string
+	 */
+	private static function logo_group( array $s, $slot ) {
+		$logos = array();
+
+		foreach ( $s['logos'] as $logo ) {
+			if ( empty( $logo['url'] ) || $slot !== $logo['position'] ) {
+				continue;
+			}
+
+			$logos[] = $logo;
+		}
+
+		if ( empty( $logos ) ) {
+			return '';
+		}
+
+		// Arrangement only means anything once a slot holds more than one.
+		$layout = isset( $s['logo_layout'][ $slot ] ) ? $s['logo_layout'][ $slot ] : 'row';
+		$layout = isset( MMPCS_Settings::LOGO_LAYOUTS[ $layout ] ) ? $layout : 'row';
+
+		$out = sprintf(
+			'<div class="coming-soon__logos coming-soon__logos--%s coming-soon__logos--slot-%s">',
+			esc_attr( $layout ),
+			esc_attr( str_replace( '_', '-', $slot ) )
+		);
+
+		foreach ( $logos as $logo ) {
+			$out .= self::logo( $logo );
+		}
+
+		return $out . '</div>';
+	}
+
+	/**
+	 * A single logo.
+	 *
+	 * Width is an inline custom property rather than a global variable, so one
+	 * slot can mix a wide wordmark with a square badge.
+	 *
+	 * @param array $logo One repeater row.
 	 * @return string
 	 */
 	private static function logo( array $logo ) {
@@ -164,14 +253,25 @@ class MMPCS_Renderer {
 			(int) $logo['width']
 		);
 
+		$open = sprintf(
+			'<div class="coming-soon__logo" style="--mmpcs-logo-w:%dpx">',
+			(int) $logo['width']
+		);
+
 		if ( empty( $logo['link'] ) ) {
-			return '<div class="coming-soon__logo">' . $img . '</div>';
+			return $open . $img . '</div>';
 		}
 
+		// alt describes the image; the ARIA label names where the link goes.
+		// Different jobs, so they are separate fields, and the label is applied
+		// only when the author filled it in.
+		$aria = ! empty( $logo['aria'] ) ? ' aria-label="' . esc_attr( $logo['aria'] ) . '"' : '';
+
 		return sprintf(
-			'<div class="coming-soon__logo"><a class="coming-soon__logo-link" href="%s"%s>%s</a></div>',
+			'%s<a class="coming-soon__logo-link" href="%s"%s>%s</a></div>',
+			$open,
 			esc_url( $logo['link'] ),
-			'' !== $logo['aria'] ? ' aria-label="' . esc_attr( $logo['aria'] ) . '"' : '',
+			$aria,
 			$img
 		);
 	}
@@ -191,15 +291,72 @@ class MMPCS_Renderer {
 		$html = '<div class="coming-soon__action-row"' . ( $is_support ? ' data-support-row' : '' ) . '>';
 
 		foreach ( $buttons as $button ) {
-			$html .= sprintf(
-				'<a class="coming-soon__button coming-soon__button--%s" href="%s" rel="noopener noreferrer" target="_blank">%s</a>',
-				esc_attr( $button['style'] ),
-				esc_url( $button['url'] ),
-				esc_html( $button['label'] )
-			);
+			$html .= empty( $button['image'] )
+				? self::text_button( $button )
+				: self::image_button( $button );
 		}
 
 		return $html . '</div>';
+	}
+
+	/**
+	 * An ordinary button: text on the page, the style is the chrome.
+	 *
+	 * The visible text is the label when there is one and the name otherwise.
+	 * Where they differ, the name is offered as the accessible name -- but only
+	 * when it contains the visible text.
+	 *
+	 * That condition is WCAG 2.5.3 (Label in Name), and it is not pedantry: a
+	 * speech-input user says "click Learn more" because that is what they can
+	 * see, and their software matches it against the accessible name. Replacing
+	 * "Learn more" with "Hosting CTA" makes the button unreachable by voice. So
+	 * a name that extends the visible text is used ("Learn more about hosting"),
+	 * and a name that replaces it is ignored here and flagged in the admin.
+	 *
+	 * @param array $button One repeater row.
+	 * @return string
+	 */
+	private static function text_button( array $button ) {
+		$name  = isset( $button['name'] ) ? $button['name'] : '';
+		$label = isset( $button['label'] ) ? $button['label'] : '';
+		$text  = '' !== $label ? $label : $name;
+
+		$aria = '';
+
+		if ( '' !== $label && '' !== $name && 0 !== strcasecmp( $label, $name ) && false !== stripos( $name, $label ) ) {
+			$aria = ' aria-label="' . esc_attr( $name ) . '"';
+		}
+
+		return sprintf(
+			'<a class="coming-soon__button coming-soon__button--%s" href="%s"%s rel="noopener noreferrer" target="_blank">%s</a>',
+			esc_attr( $button['style'] ),
+			esc_url( $button['url'] ),
+			$aria,
+			esc_html( $text )
+		);
+	}
+
+	/**
+	 * An image button: the image is the button.
+	 *
+	 * No style variant is applied, because a fill and a border around an image
+	 * that already carries its own shape is chrome on top of chrome -- which is
+	 * why the settings screen hides the style control once an image is set.
+	 *
+	 * The name becomes the alt text. There is no visible text to contradict, so
+	 * no Label in Name question arises here; the alt text simply is the link's
+	 * accessible name, and the sanitiser guarantees it exists.
+	 *
+	 * @param array $button One repeater row.
+	 * @return string
+	 */
+	private static function image_button( array $button ) {
+		return sprintf(
+			'<a class="coming-soon__button coming-soon__button--image" href="%s" rel="noopener noreferrer" target="_blank"><img class="coming-soon__button-img" src="%s" alt="%s" decoding="async"></a>',
+			esc_url( $button['url'] ),
+			esc_url( $button['image'] ),
+			esc_attr( isset( $button['name'] ) ? $button['name'] : '' )
+		);
 	}
 
 	/**
@@ -208,7 +365,7 @@ class MMPCS_Renderer {
 	 * @param array $footer Footer settings.
 	 * @return string
 	 */
-	private static function footer( array $footer ) {
+	private static function footer( array $footer, $logos = '' ) {
 		$parts = array();
 
 		$company = '';
@@ -244,6 +401,8 @@ class MMPCS_Renderer {
 			);
 		}
 
-		return '<footer class="coming-soon__footer">' . implode( '', $parts ) . '</footer>';
+		// Logos sit between the footer's top rule and its text, centered.
+		return '<footer class="coming-soon__footer">' . $logos
+			. '<p class="coming-soon__footer-text">' . implode( '', $parts ) . '</p></footer>';
 	}
 }

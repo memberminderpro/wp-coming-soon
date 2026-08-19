@@ -130,6 +130,17 @@ class MMPCS_Admin {
 				'mediaTitle'  => __( 'Choose a logo', 'mmp-coming-soon' ),
 				'mediaButton' => __( 'Use this image', 'mmp-coming-soon' ),
 				'confirmRow'  => __( 'Remove this row?', 'mmp-coming-soon' ),
+				'untitled'    => __( 'Untitled logo', 'mmp-coming-soon' ),
+				'previewUrl'   => MMPCS_Preview::endpoint(),
+				'previewNonce' => wp_create_nonce( MMPCS_Preview::ACTION ),
+				'optionKey'    => MMPCS_OPTION,
+				'previewUpdating' => __( 'Updating…', 'mmp-coming-soon' ),
+				'previewCurrent'  => __( 'Up to date', 'mmp-coming-soon' ),
+				/* translators: %s: the text a screen reader will announce. */
+				'announced'       => __( 'Screen readers announce: %s', 'mmp-coming-soon' ),
+				'announceClash'   => __( 'The name must contain the button text to be announced, so the button text is used instead. Voice control users say what they can see.', 'mmp-coming-soon' ),
+				/* translators: %s: the image's natural width in pixels. */
+				'naturalWidth' => __( 'Original: %s px wide', 'mmp-coming-soon' ),
 			)
 		);
 	}
@@ -163,11 +174,12 @@ class MMPCS_Admin {
 
 			<p class="mmpcs-lede">
 				<?php esc_html_e( 'A self-contained holding page for visitors who are not signed in. Everything on it is configured here.', 'mmp-coming-soon' ); ?>
-				<a class="button button-secondary" href="<?php echo esc_url( $preview_url ); ?>" target="_blank" rel="noopener">
-					<?php esc_html_e( 'Preview page', 'mmp-coming-soon' ); ?>
+				<a class="button button-secondary" href="<?php echo esc_url( $preview_url ); ?>" target="_blank" rel="noopener" data-preview-popout>
+					<?php esc_html_e( 'Preview window', 'mmp-coming-soon' ); ?>
 				</a>
 			</p>
 
+			<div class="mmpcs-layout" data-mmpcs-layout>
 			<form method="post" action="options.php" class="mmpcs-form">
 				<?php settings_fields( self::OPTION_PAGE ); ?>
 
@@ -189,18 +201,26 @@ class MMPCS_Admin {
 				self::panel_footer( $s );
 				self::panel_background( $s );
 				self::panel_colors( $s );
+				self::panel_presets( $s );
 				self::panel_updates( $s );
 				?>
 
 				<?php submit_button(); ?>
 			</form>
 
+			<?php self::preview_pane(); ?>
+			</div>
+
 			<?php
-			// Rendered outside the settings form: these act immediately and
-			// each needs its own nonce. Buttons inside the panels above reach
-			// them with the HTML5 form attribute rather than nesting forms,
-			// which is invalid markup.
-			self::panel_presets( $s );
+			/*
+			 * The tool forms are rendered outside the settings form: each acts
+			 * immediately and carries its own nonce, and a form cannot be
+			 * nested inside another. The controls that drive them sit in the
+			 * Presets panel above and reach them with the HTML5 form
+			 * attribute, which is also what lets that panel live inside the
+			 * settings form -- where the tabs expect to find it -- without any
+			 * of its fields being submitted along with the settings.
+			 */
 			self::tool_forms();
 			?>
 		</div>
@@ -329,7 +349,8 @@ class MMPCS_Admin {
 				<label for="mmpcs-preset-name" class="screen-reader-text"><?php esc_html_e( 'Preset name', 'mmp-coming-soon' ); ?></label>
 				<input type="text" id="mmpcs-preset-name" name="preset_name" form="mmpcs-preset-save-form"
 					class="regular-text" placeholder="<?php esc_attr_e( 'Name this variation', 'mmp-coming-soon' ); ?>">
-				<button type="submit" form="mmpcs-preset-save-form" class="button button-secondary">
+				<button type="submit" form="mmpcs-preset-save-form" class="button button-secondary mmpcs-button--icon">
+					<span class="dashicons dashicons-saved" aria-hidden="true"></span>
 					<?php esc_html_e( 'Save current settings as a preset', 'mmp-coming-soon' ); ?>
 				</button>
 			</p>
@@ -357,16 +378,25 @@ class MMPCS_Admin {
 								?>
 							</td>
 							<td class="mmpcs-presets-actions">
+								<div class="mmpcs-actions">
 								<button type="submit" form="mmpcs-preset-apply-form" name="preset_name"
-									value="<?php echo esc_attr( $preset['name'] ); ?>" class="button button-secondary"
+									value="<?php echo esc_attr( $preset['name'] ); ?>" class="button button-secondary mmpcs-button--icon"
 									data-confirm="<?php esc_attr_e( 'Apply this preset over your current settings? You will be able to undo this.', 'mmp-coming-soon' ); ?>">
+									<span class="dashicons dashicons-yes-alt" aria-hidden="true"></span>
 									<?php esc_html_e( 'Apply', 'mmp-coming-soon' ); ?>
 								</button>
+								<button type="submit" form="mmpcs-preset-export-form" name="preset_name"
+									value="<?php echo esc_attr( $preset['name'] ); ?>" class="button button-secondary mmpcs-button--icon">
+									<span class="dashicons dashicons-download" aria-hidden="true"></span>
+									<?php esc_html_e( 'Download', 'mmp-coming-soon' ); ?>
+								</button>
 								<button type="submit" form="mmpcs-preset-delete-form" name="preset_name"
-									value="<?php echo esc_attr( $preset['name'] ); ?>" class="button-link button-link-delete"
+									value="<?php echo esc_attr( $preset['name'] ); ?>" class="button button-secondary mmpcs-button--icon mmpcs-button--delete"
 									data-confirm="<?php esc_attr_e( 'Delete this preset? Deleting a preset cannot be undone.', 'mmp-coming-soon' ); ?>">
+									<span class="dashicons dashicons-trash" aria-hidden="true"></span>
 									<?php esc_html_e( 'Delete', 'mmp-coming-soon' ); ?>
 								</button>
+								</div>
 							</td>
 						</tr>
 					<?php endforeach; ?>
@@ -379,8 +409,9 @@ class MMPCS_Admin {
 				<tr>
 					<th scope="row"><?php esc_html_e( 'Export', 'mmp-coming-soon' ); ?></th>
 					<td>
-						<button type="submit" form="mmpcs-export-form" class="button button-secondary">
-							<?php esc_html_e( 'Download settings as JSON', 'mmp-coming-soon' ); ?>
+						<button type="submit" form="mmpcs-export-form" class="button button-secondary mmpcs-button--icon">
+							<span class="dashicons dashicons-download" aria-hidden="true"></span>
+							<?php esc_html_e( 'Download current settings as JSON', 'mmp-coming-soon' ); ?>
 						</button>
 						<p class="description"><?php esc_html_e( 'Keep it as a file, put it in version control, or import it on another site.', 'mmp-coming-soon' ); ?></p>
 					</td>
@@ -388,9 +419,10 @@ class MMPCS_Admin {
 				<tr>
 					<th scope="row"><label for="mmpcs-import-file"><?php esc_html_e( 'Import', 'mmp-coming-soon' ); ?></label></th>
 					<td>
-						<input type="file" id="mmpcs-import-file" name="mmpcs_file" form="mmpcs-import-form" accept="application/json,.json">
-						<button type="submit" form="mmpcs-import-form" class="button button-secondary"
+						<input type="file" id="mmpcs-import-file" name="mmpcs_file" form="mmpcs-import-form" accept="application/json,.json" data-import-file>
+						<button type="submit" form="mmpcs-import-form" class="button button-secondary mmpcs-button--icon" data-import-submit hidden
 							data-confirm="<?php esc_attr_e( 'Import this file over your current settings? You will be able to undo this.', 'mmp-coming-soon' ); ?>">
+							<span class="dashicons dashicons-upload" aria-hidden="true"></span>
 							<?php esc_html_e( 'Import', 'mmp-coming-soon' ); ?>
 						</button>
 						<p class="description"><?php esc_html_e( 'The file is read and discarded; nothing is added to your media library.', 'mmp-coming-soon' ); ?></p>
@@ -413,6 +445,7 @@ class MMPCS_Admin {
 			'preset_save'   => 'mmpcs-preset-save-form',
 			'preset_apply'  => 'mmpcs-preset-apply-form',
 			'preset_delete' => 'mmpcs-preset-delete-form',
+			'preset_export' => 'mmpcs-preset-export-form',
 			'export'        => 'mmpcs-export-form',
 		);
 
@@ -491,34 +524,11 @@ class MMPCS_Admin {
 		<section class="mmpcs-panel" data-panel="content">
 			<table class="form-table" role="presentation">
 				<tr>
-					<th scope="row"><label for="mmpcs-logo-url"><?php esc_html_e( 'Logo image URL', 'mmp-coming-soon' ); ?></label></th>
+					<th scope="row"><?php esc_html_e( 'Logos', 'mmp-coming-soon' ); ?></th>
 					<td>
-						<div class="mmpcs-media">
-							<input type="url" id="mmpcs-logo-url" class="regular-text code" name="<?php echo esc_attr( self::name( '[logo][url]' ) ); ?>" value="<?php echo esc_attr( $s['logo']['url'] ); ?>">
-							<button type="button" class="button mmpcs-media-pick"><?php esc_html_e( 'Choose image', 'mmp-coming-soon' ); ?></button>
-						</div>
-						<p class="description"><?php esc_html_e( 'Pick from the media library or paste any image URL. Leave blank to hide the logo.', 'mmp-coming-soon' ); ?></p>
-					</td>
-				</tr>
-				<tr>
-					<th scope="row"><label for="mmpcs-logo-alt"><?php esc_html_e( 'Logo alt text', 'mmp-coming-soon' ); ?></label></th>
-					<td><input type="text" id="mmpcs-logo-alt" class="regular-text" name="<?php echo esc_attr( self::name( '[logo][alt]' ) ); ?>" value="<?php echo esc_attr( $s['logo']['alt'] ); ?>"></td>
-				</tr>
-				<tr>
-					<th scope="row"><label for="mmpcs-logo-link"><?php esc_html_e( 'Logo link URL', 'mmp-coming-soon' ); ?></label></th>
-					<td>
-						<input type="url" id="mmpcs-logo-link" class="regular-text code" name="<?php echo esc_attr( self::name( '[logo][link]' ) ); ?>" value="<?php echo esc_attr( $s['logo']['link'] ); ?>">
-						<p class="description"><?php esc_html_e( 'Leave blank to render the logo without a link.', 'mmp-coming-soon' ); ?></p>
-					</td>
-				</tr>
-				<tr>
-					<th scope="row"><label for="mmpcs-logo-aria"><?php esc_html_e( 'Logo link ARIA label', 'mmp-coming-soon' ); ?></label></th>
-					<td><input type="text" id="mmpcs-logo-aria" class="regular-text" name="<?php echo esc_attr( self::name( '[logo][aria]' ) ); ?>" value="<?php echo esc_attr( $s['logo']['aria'] ); ?>"></td>
-				</tr>
-				<tr>
-					<th scope="row"><label for="mmpcs-logo-width"><?php esc_html_e( 'Logo width', 'mmp-coming-soon' ); ?></label></th>
-					<td>
-						<input type="number" id="mmpcs-logo-width" class="small-text" min="40" max="800" step="1" name="<?php echo esc_attr( self::name( '[logo][width]' ) ); ?>" value="<?php echo esc_attr( $s['logo']['width'] ); ?>"> px
+						<p class="description"><?php esc_html_e( 'Any number of logos, each placed wherever you want it — a mascot at the top, a client logo under the copy, a row of sponsors above the footer. Rows are collapsed once saved; open one to edit it. Order here is the order they appear.', 'mmp-coming-soon' ); ?></p>
+						<?php self::repeater( 'logos', $s['logos'], 'logo' ); ?>
+						<?php self::logo_layout_controls( $s ); ?>
 					</td>
 				</tr>
 				<tr>
@@ -534,7 +544,10 @@ class MMPCS_Admin {
 				</tr>
 				<tr>
 					<th scope="row"><label for="mmpcs-description"><?php esc_html_e( 'Description', 'mmp-coming-soon' ); ?></label></th>
-					<td><textarea id="mmpcs-description" class="large-text" rows="4" name="<?php echo esc_attr( self::name( '[description]' ) ); ?>"><?php echo esc_textarea( $s['description'] ); ?></textarea></td>
+					<td>
+						<textarea id="mmpcs-description" class="large-text" rows="6" name="<?php echo esc_attr( self::name( '[description]' ) ); ?>"><?php echo esc_textarea( $s['description'] ); ?></textarea>
+						<p class="description"><?php esc_html_e( 'Leave a blank line to start a new paragraph. A single line break stays inside the paragraph.', 'mmp-coming-soon' ); ?></p>
+					</td>
 				</tr>
 			</table>
 			<?php self::reset_button( 'content' ); ?>
@@ -856,7 +869,15 @@ class MMPCS_Admin {
 				<?php endforeach; ?>
 			</div>
 			<button type="button" class="button mmpcs-add" data-template="tmpl-mmpcs-<?php echo esc_attr( $type ); ?>" data-base="<?php echo esc_attr( $base ); ?>">
-				<?php echo 'button' === $type ? esc_html__( 'Add button', 'mmp-coming-soon' ) : esc_html__( 'Add link', 'mmp-coming-soon' ); ?>
+				<?php
+				if ( 'button' === $type ) {
+					esc_html_e( 'Add button', 'mmp-coming-soon' );
+				} elseif ( 'logo' === $type ) {
+					esc_html_e( 'Add logo', 'mmp-coming-soon' );
+				} else {
+					esc_html_e( 'Add link', 'mmp-coming-soon' );
+				}
+				?>
 			</button>
 		</div>
 		<?php
@@ -872,35 +893,266 @@ class MMPCS_Admin {
 	 * @return void
 	 */
 	private static function row( $base, array $row, $type, $index = '__i__' ) {
+		if ( 'logo' === $type ) {
+			self::logo_row( $base, $row, $index );
+
+			return;
+		}
+
+		$name  = isset( $row['name'] ) ? $row['name'] : '';
 		$label = isset( $row['label'] ) ? $row['label'] : '';
 		$url   = isset( $row['url'] ) ? $row['url'] : '';
 		$style = isset( $row['style'] ) ? $row['style'] : 'ghost';
+		$image = isset( $row['image'] ) ? $row['image'] : '';
+
+		$is_button   = 'button' === $type;
+		$has_label   = '' !== $label;
+		$has_image   = $is_button && '' !== $image;
+		$field_base  = $base . '[' . $index . ']';
 		?>
 		<div class="mmpcs-row">
 			<span class="mmpcs-move">
 				<button type="button" class="button-link mmpcs-up" aria-label="<?php esc_attr_e( 'Move up', 'mmp-coming-soon' ); ?>"><span class="dashicons dashicons-arrow-up-alt2"></span></button>
 				<button type="button" class="button-link mmpcs-down" aria-label="<?php esc_attr_e( 'Move down', 'mmp-coming-soon' ); ?>"><span class="dashicons dashicons-arrow-down-alt2"></span></button>
 			</span>
+			<span class="mmpcs-row__fields">
 			<label class="mmpcs-field">
-				<span><?php esc_html_e( 'Label', 'mmp-coming-soon' ); ?></span>
-				<input type="text" name="<?php echo esc_attr( $base ); ?>[<?php echo esc_attr( $index ); ?>][label]" value="<?php echo esc_attr( $label ); ?>">
+				<span><?php echo $is_button ? esc_html__( 'Name', 'mmp-coming-soon' ) : esc_html__( 'Label', 'mmp-coming-soon' ); ?></span>
+				<input type="text" data-button-name name="<?php echo esc_attr( $field_base ); ?>[<?php echo $is_button ? 'name' : 'label'; ?>]" value="<?php echo esc_attr( $is_button ? $name : $label ); ?>">
 			</label>
+			<?php if ( $is_button ) : ?>
+			<?php
+			/*
+			 * The mode is never stored. An image is what makes a button an
+			 * image button, so the mode can always be read back off the values
+			 * themselves -- which means no migration, and no way for a stored
+			 * mode to disagree with what is actually set.
+			 */
+			$mode = $has_image ? 'image' : ( $has_label ? 'text' : 'name' );
+
+			$modes = array(
+				'name'  => array(
+					'label' => __( 'Name', 'mmp-coming-soon' ),
+					'icon'  => 'dashicons-editor-textcolor',
+					'hint'  => __( 'The button shows its name', 'mmp-coming-soon' ),
+				),
+				'text'  => array(
+					'label' => __( 'Text', 'mmp-coming-soon' ),
+					'icon'  => 'dashicons-edit',
+					'hint'  => __( 'The button shows different text', 'mmp-coming-soon' ),
+				),
+				'image' => array(
+					'label' => __( 'Image', 'mmp-coming-soon' ),
+					'icon'  => 'dashicons-format-image',
+					'hint'  => __( 'The button shows an image', 'mmp-coming-soon' ),
+				),
+			);
+			?>
+			<span class="mmpcs-field mmpcs-field--seg">
+				<span id="mmpcs-seg-<?php echo esc_attr( $index ); ?>"><?php esc_html_e( 'Shows', 'mmp-coming-soon' ); ?></span>
+				<span class="mmpcs-seg" role="radiogroup" aria-labelledby="mmpcs-seg-<?php echo esc_attr( $index ); ?>" data-button-mode>
+					<?php foreach ( $modes as $value => $meta ) : ?>
+					<button
+						type="button"
+						role="radio"
+						class="mmpcs-seg__option"
+						data-mode="<?php echo esc_attr( $value ); ?>"
+						aria-checked="<?php echo $mode === $value ? 'true' : 'false'; ?>"
+						tabindex="<?php echo $mode === $value ? '0' : '-1'; ?>"
+						title="<?php echo esc_attr( $meta['hint'] ); ?>">
+						<span class="dashicons <?php echo esc_attr( $meta['icon'] ); ?>" aria-hidden="true"></span>
+						<span><?php echo esc_html( $meta['label'] ); ?></span>
+					</button>
+					<?php endforeach; ?>
+				</span>
+			</span>
+			<label class="mmpcs-field" data-field="text"<?php echo 'text' === $mode ? '' : ' hidden'; ?>>
+				<span><?php esc_html_e( 'Button text', 'mmp-coming-soon' ); ?></span>
+				<input type="text" data-button-label name="<?php echo esc_attr( $field_base ); ?>[label]" value="<?php echo esc_attr( $label ); ?>">
+			</label>
+			<label class="mmpcs-field mmpcs-field--wide" data-field="image"<?php echo 'image' === $mode ? '' : ' hidden'; ?>>
+				<span><?php esc_html_e( 'Image', 'mmp-coming-soon' ); ?></span>
+				<span class="mmpcs-media">
+					<input type="url" class="code" data-button-image name="<?php echo esc_attr( $field_base ); ?>[image]" value="<?php echo esc_attr( $image ); ?>">
+					<button type="button" class="button mmpcs-media-pick"><?php esc_html_e( 'Choose image', 'mmp-coming-soon' ); ?></button>
+				</span>
+			</label>
+			<?php endif; ?>
 			<label class="mmpcs-field mmpcs-field--wide">
 				<span><?php esc_html_e( 'Link', 'mmp-coming-soon' ); ?></span>
-				<input type="url" class="code" name="<?php echo esc_attr( $base ); ?>[<?php echo esc_attr( $index ); ?>][url]" value="<?php echo esc_attr( $url ); ?>">
+				<input type="url" class="code" name="<?php echo esc_attr( $field_base ); ?>[url]" value="<?php echo esc_attr( $url ); ?>">
 			</label>
-			<?php if ( 'button' === $type ) : ?>
-			<label class="mmpcs-field mmpcs-field--narrow">
+			<?php if ( $is_button ) : ?>
+			<label class="mmpcs-field mmpcs-field--narrow" data-field="style"<?php echo 'image' === $mode ? ' hidden' : ''; ?>>
 				<span><?php esc_html_e( 'Style', 'mmp-coming-soon' ); ?></span>
-				<select name="<?php echo esc_attr( $base ); ?>[<?php echo esc_attr( $index ); ?>][style]">
-					<?php foreach ( MMPCS_Settings::BUTTON_STYLES as $value => $name ) : ?>
-						<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $style, $value ); ?>><?php echo esc_html( $name ); ?></option>
+				<select name="<?php echo esc_attr( $field_base ); ?>[style]">
+					<?php foreach ( MMPCS_Settings::BUTTON_STYLES as $value => $style_label ) : ?>
+						<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $style, $value ); ?>><?php echo esc_html( $style_label ); ?></option>
 					<?php endforeach; ?>
 				</select>
 			</label>
+			<p class="mmpcs-announce" data-button-announce aria-live="polite" hidden></p>
 			<?php endif; ?>
+			</span>
 			<button type="button" class="button-link mmpcs-remove" aria-label="<?php esc_attr_e( 'Remove row', 'mmp-coming-soon' ); ?>"><span class="dashicons dashicons-no-alt"></span></button>
 		</div>
+		<?php
+	}
+
+	/**
+	 * One logo row.
+	 *
+	 * A <details> rather than a JavaScript accordion: it collapses without any
+	 * script, is keyboard operable for free, and a row that has been filled in
+	 * is worth summarising rather than showing as six open fields.
+	 *
+	 * @param string     $base  Field name prefix.
+	 * @param array      $row   Row values.
+	 * @param string|int $index Row index, or the template placeholder.
+	 * @return void
+	 */
+	private static function logo_row( $base, array $row, $index = '__i__' ) {
+		$url      = isset( $row['url'] ) ? $row['url'] : '';
+		$alt      = isset( $row['alt'] ) ? $row['alt'] : '';
+		$aria     = isset( $row['aria'] ) ? $row['aria'] : '';
+		$link     = isset( $row['link'] ) ? $row['link'] : '';
+		$width    = isset( $row['width'] ) ? $row['width'] : 200;
+		$position = isset( $row['position'] ) ? $row['position'] : 'top';
+
+		$name = $base . '[' . $index . ']';
+
+		// A row with no image yet is a row someone is still filling in, so it
+		// opens; a saved one summarises itself instead.
+		$open = '' === $url ? ' open' : '';
+		?>
+		<details class="mmpcs-row mmpcs-row--logo"<?php echo esc_attr( $open ); ?>>
+			<summary class="mmpcs-logo-summary">
+				<span class="mmpcs-move">
+					<button type="button" class="button-link mmpcs-up" aria-label="<?php esc_attr_e( 'Move up', 'mmp-coming-soon' ); ?>"><span class="dashicons dashicons-arrow-up-alt2"></span></button>
+					<button type="button" class="button-link mmpcs-down" aria-label="<?php esc_attr_e( 'Move down', 'mmp-coming-soon' ); ?>"><span class="dashicons dashicons-arrow-down-alt2"></span></button>
+				</span>
+				<img class="mmpcs-logo-thumb" src="<?php echo esc_url( $url ); ?>" alt="" data-logo-thumb<?php echo '' === $url ? ' hidden' : ''; ?>>
+				<span class="mmpcs-logo-name" data-logo-name><?php echo esc_html( '' !== $alt ? $alt : __( 'Untitled logo', 'mmp-coming-soon' ) ); ?></span>
+				<span class="mmpcs-logo-slot" data-logo-slot><?php echo esc_html( isset( MMPCS_Settings::LOGO_POSITIONS[ $position ] ) ? MMPCS_Settings::LOGO_POSITIONS[ $position ] : '' ); ?></span>
+				<button type="button" class="button-link mmpcs-remove" aria-label="<?php esc_attr_e( 'Remove logo', 'mmp-coming-soon' ); ?>"><span class="dashicons dashicons-no-alt"></span></button>
+			</summary>
+
+			<div class="mmpcs-logo-fields">
+				<label class="mmpcs-field mmpcs-field--wide">
+					<span><?php esc_html_e( 'Image URL', 'mmp-coming-soon' ); ?></span>
+					<span class="mmpcs-media">
+						<input type="url" class="code" data-logo-url name="<?php echo esc_attr( $name ); ?>[url]" value="<?php echo esc_attr( $url ); ?>">
+						<button type="button" class="button mmpcs-media-pick"><?php esc_html_e( 'Choose image', 'mmp-coming-soon' ); ?></button>
+					</span>
+				</label>
+				<label class="mmpcs-field">
+					<span><?php esc_html_e( 'Alt text', 'mmp-coming-soon' ); ?></span>
+					<input type="text" data-logo-alt name="<?php echo esc_attr( $name ); ?>[alt]" value="<?php echo esc_attr( $alt ); ?>">
+					<span class="mmpcs-hint"><?php esc_html_e( 'Describes the image itself.', 'mmp-coming-soon' ); ?></span>
+				</label>
+				<label class="mmpcs-field">
+					<span><?php esc_html_e( 'Link ARIA label', 'mmp-coming-soon' ); ?></span>
+					<input type="text" name="<?php echo esc_attr( $name ); ?>[aria]" value="<?php echo esc_attr( $aria ); ?>">
+					<span class="mmpcs-hint"><?php esc_html_e( 'Names where the link goes. Only used when a link is set.', 'mmp-coming-soon' ); ?></span>
+				</label>
+				<label class="mmpcs-field mmpcs-field--wide">
+					<span><?php esc_html_e( 'Link URL', 'mmp-coming-soon' ); ?></span>
+					<input type="url" class="code" name="<?php echo esc_attr( $name ); ?>[link]" value="<?php echo esc_attr( $link ); ?>">
+				</label>
+				<label class="mmpcs-field mmpcs-field--narrow">
+					<span><?php esc_html_e( 'Width', 'mmp-coming-soon' ); ?></span>
+					<input type="number" class="small-text" min="40" max="800" step="1" data-logo-width name="<?php echo esc_attr( $name ); ?>[width]" value="<?php echo esc_attr( $width ); ?>"> px
+					<span class="mmpcs-hint" data-logo-natural></span>
+				</label>
+				<label class="mmpcs-field">
+					<span><?php esc_html_e( 'Position', 'mmp-coming-soon' ); ?></span>
+					<select data-logo-position name="<?php echo esc_attr( $name ); ?>[position]">
+						<?php foreach ( MMPCS_Settings::LOGO_POSITIONS as $value => $label ) : ?>
+						<option value="<?php echo esc_attr( $value ); ?>"<?php selected( $position, $value ); ?>><?php echo esc_html( $label ); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</label>
+			</div>
+		</details>
+		<?php
+	}
+
+	/**
+	 * Arrangement controls, one per slot.
+	 *
+	 * Every slot has a control, but only the slots actually holding more than
+	 * one logo are shown; the script reveals and hides them as positions
+	 * change. Rendering them all means the choice survives a slot temporarily
+	 * dropping to one logo, and works with the script disabled.
+	 *
+	 * @param array $s Settings.
+	 * @return void
+	 */
+	private static function logo_layout_controls( array $s ) {
+		$counts = array();
+
+		foreach ( $s['logos'] as $logo ) {
+			if ( empty( $logo['url'] ) ) {
+				continue;
+			}
+
+			$position            = $logo['position'];
+			$counts[ $position ] = isset( $counts[ $position ] ) ? $counts[ $position ] + 1 : 1;
+		}
+		?>
+		<div class="mmpcs-logo-layouts" data-logo-layouts>
+			<p class="description"><?php esc_html_e( 'When logos share a slot', 'mmp-coming-soon' ); ?></p>
+			<?php foreach ( MMPCS_Settings::LOGO_POSITIONS as $position => $label ) : ?>
+				<?php
+				$shared  = isset( $counts[ $position ] ) && $counts[ $position ] > 1;
+				$current = isset( $s['logo_layout'][ $position ] ) ? $s['logo_layout'][ $position ] : 'row';
+				?>
+			<label class="mmpcs-field mmpcs-layout-row" data-slot="<?php echo esc_attr( $position ); ?>"<?php echo $shared ? '' : ' hidden'; ?>>
+				<span><?php echo esc_html( $label ); ?></span>
+				<select name="<?php echo esc_attr( self::name( '[logo_layout][' . $position . ']' ) ); ?>">
+					<?php foreach ( MMPCS_Settings::LOGO_LAYOUTS as $value => $layout_label ) : ?>
+					<option value="<?php echo esc_attr( $value ); ?>"<?php selected( $current, $value ); ?>><?php echo esc_html( $layout_label ); ?></option>
+					<?php endforeach; ?>
+				</select>
+			</label>
+			<?php endforeach; ?>
+		</div>
+		<?php
+	}
+
+	/**
+	 * The live preview pane.
+	 *
+	 * The iframe starts empty and is filled by the first post from the admin
+	 * script, so the pane costs a page load nothing when it is collapsed and
+	 * never renders stale saved state before the unsaved state arrives.
+	 *
+	 * @return void
+	 */
+	private static function preview_pane() {
+		?>
+		<aside class="mmpcs-preview" data-mmpcs-preview>
+			<div class="mmpcs-preview__bar">
+				<button type="button" class="button-link mmpcs-preview__toggle" data-preview-toggle aria-expanded="true">
+					<span class="dashicons dashicons-visibility"></span>
+					<span><?php esc_html_e( 'Live preview', 'mmp-coming-soon' ); ?></span>
+				</button>
+				<span class="mmpcs-preview__state" data-preview-state role="status"></span>
+				<button type="button" class="button button-small" data-preview-popout>
+					<?php esc_html_e( 'Pop out', 'mmp-coming-soon' ); ?>
+				</button>
+			</div>
+			<div class="mmpcs-preview__stage" data-preview-stage>
+				<iframe
+					class="mmpcs-preview__frame"
+					name="mmpcs_preview_frame"
+					title="<?php esc_attr_e( 'Live preview of the coming soon page', 'mmp-coming-soon' ); ?>"
+					data-preview-frame></iframe>
+			</div>
+			<p class="mmpcs-preview__note description">
+				<?php esc_html_e( 'Shows what you have typed, saved or not. Nothing here changes the live site.', 'mmp-coming-soon' ); ?>
+			</p>
+		</aside>
 		<?php
 	}
 
@@ -913,6 +1165,9 @@ class MMPCS_Admin {
 		?>
 		<script type="text/template" id="tmpl-mmpcs-button">
 			<?php self::row( '__base__', array( 'style' => 'ghost' ), 'button' ); ?>
+		</script>
+		<script type="text/template" id="tmpl-mmpcs-logo">
+			<?php self::row( '__base__', array( 'position' => 'top' ), 'logo' ); ?>
 		</script>
 		<script type="text/template" id="tmpl-mmpcs-link">
 			<?php self::row( '__base__', array(), 'link' ); ?>

@@ -128,17 +128,58 @@ html {
 
 /* ---------- logo ---------- */
 
+/*
+ * A slot's logos. Side by side wraps and centres, which is what a sponsor or
+ * partner row wants; stacked is the exception, chosen per slot.
+ */
+.coming-soon__logos {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	inline-size: 100%;
+}
+
+.coming-soon__logos--row {
+	flex-direction: row;
+	flex-wrap: wrap;
+	gap: 32px;
+}
+
+.coming-soon__logos--stack {
+	flex-direction: column;
+	gap: 16px;
+}
+
+/*
+ * 64px under the top slot reproduces the approved spacing. Every other slot
+ * sits inside running copy and takes a tighter rhythm.
+ */
+.coming-soon__logos--slot-top {
+	margin-block-end: 64px;
+}
+
+.coming-soon__logos--slot-after-badge,
+.coming-soon__logos--slot-after-heading,
+.coming-soon__logos--slot-after-description {
+	margin-block: 8px 32px;
+}
+
+.coming-soon__logos--slot-after-buttons {
+	margin-block-start: 40px;
+}
+
+.coming-soon__logos--slot-above-footer {
+	margin-block-end: 16px;
+}
+
 .coming-soon__logo {
 	display: block;
-	inline-size: var(--mmpcs-logo-width, 260px);
-	max-inline-size: 100%;
 	/*
-	 * 64px reproduces the approved spacing. The Etch original put the same
-	 * .coming-soon__logo class on both the wrapper and the <img>, so its 32px
-	 * bottom margin was applied twice. The class is split here, so the value is
-	 * stated once, deliberately.
+	 * Per logo, set inline by the renderer, so one slot can hold a wide
+	 * wordmark next to a square badge.
 	 */
-	margin-block-end: 64px;
+	inline-size: var(--mmpcs-logo-w, 200px);
+	max-inline-size: 100%;
 }
 
 .coming-soon__logo-link {
@@ -193,10 +234,38 @@ html {
 
 .coming-soon__subtitle {
 	max-inline-size: 560px;
-	margin: 0 0 40px;
+	/*
+	 * Spacing now sits between paragraphs, because the description can be more
+	 * than one. The 40px that used to follow a lone paragraph is restored on the
+	 * last one below, so the gap before the divider is identical to 1.3.0
+	 * whether the description is one paragraph or four.
+	 */
+	margin: 0 0 16px;
 	color: var(--mmpcs-text-muted);
 	font-size: clamp(15.2px, 2vw, 17.6px);
 	line-height: 1.65;
+	/*
+	 * A centered last line holding one short word reads as a mistake, so this
+	 * paragraph must not be allowed to orphan.
+	 *
+	 * Two declarations, in this order, on purpose. "pretty" is the correct tool
+	 * -- it leaves the earlier lines where they fall and only reworks the end of
+	 * the paragraph -- but Firefox does not support it and drops the whole
+	 * declaration. "balance" is supported there, and evens every line out, which
+	 * removes the orphan too; it is the blunter result, so it is stated first
+	 * and overridden wherever "pretty" is understood. Anything older than both
+	 * ignores the pair and wraps exactly as it did before.
+	 */
+	text-wrap: balance;
+	text-wrap: pretty;
+}
+
+/*
+ * :last-of-type is safe here: the only other <p> among these siblings is the
+ * title, which always precedes the description. The badge is an <h1>.
+ */
+.coming-soon__subtitle:last-of-type {
+	margin-block-end: 40px;
 }
 
 .coming-soon__divider {
@@ -297,6 +366,30 @@ html {
 	border-color: var(--mmpcs-accent);
 }
 
+/*
+ * An image button carries its own shape, so it gets no fill, border or padding
+ * -- a styled button around a badge is chrome on top of chrome. The height is
+ * capped to the text buttons' so a mixed row still lines up, and the width
+ * follows from the image's own proportions.
+ */
+.coming-soon__button--image {
+	padding: 0;
+	border: 0;
+	background: none;
+}
+
+.coming-soon__button--image:hover {
+	opacity: 0.85;
+}
+
+.coming-soon__button-img {
+	display: block;
+	block-size: auto;
+	max-block-size: 48px;
+	max-inline-size: 100%;
+	inline-size: auto;
+}
+
 /* The support row is quieter than the main row. */
 [data-support-row] .coming-soon__button {
 	font-size: 12.8px;
@@ -320,6 +413,13 @@ html {
 	font-size: 12.48px;
 	line-height: 1.99;
 	text-align: center;
+	/* Same reasoning as the subtitle: centered, and wraps on narrow screens. */
+	text-wrap: balance;
+	text-wrap: pretty;
+}
+
+.coming-soon__footer-text {
+	margin: 0;
 }
 
 .coming-soon__footer a {

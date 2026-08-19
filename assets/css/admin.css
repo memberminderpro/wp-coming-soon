@@ -82,14 +82,239 @@
 	margin-bottom: 0.75rem;
 }
 
+/*
+ * Every rule in this file that sets display beats the browser's own
+ * [hidden] { display: none }, because a class selector outranks it. That is why
+ * the button rows' optional fields and the logos' shared-slot controls stayed
+ * on screen while their toggles happily reported themselves as off. Stated once,
+ * loudly, so hiding a thing keeps working however it is styled later.
+ */
+[hidden] {
+	display: none !important;
+}
+
+/*
+ * Rows lay out against the width of the settings column, not the viewport --
+ * the live preview takes half the screen on a wide monitor, so a viewport query
+ * would keep these fields side by side long after they had stopped fitting.
+ */
+.mmpcs-form {
+	container-type: inline-size;
+	container-name: mmpcs-settings;
+}
+
 .mmpcs-row {
 	display: flex;
-	align-items: flex-end;
+	align-items: flex-start;
 	gap: 0.75rem;
 	padding: 0.75rem;
 	border: 1px solid #dcdcde;
 	border-radius: 4px;
 	background: #f6f7f7;
+}
+
+/*
+ * The fields wrap inside their own box, so the move and remove controls stay
+ * put at either end instead of being carried along by the wrapping.
+ */
+.mmpcs-row__fields {
+	display: flex;
+	flex: 1 1 auto;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	gap: 0.75rem;
+	min-inline-size: 0;
+}
+
+/*
+ * What the button shows: name, different text, or an image. A radiogroup
+ * rather than two independent toggles, because the three are exclusive and a
+ * segmented control says so at a glance -- picking one visibly releases the
+ * others, where two on/off icons only imply it.
+ */
+/*
+ * Sized to its contents, never to a column width. Sitting in a fixed-width
+ * field is what clipped the third segment clean off behind overflow: hidden --
+ * the control read as two options plus a blue sliver.
+ */
+/*
+ * Compound selector on purpose. This block sits above .mmpcs-field in the
+ * file, so a single-class rule would lose to it on order alone and the control
+ * would be stretched to a column width again.
+ */
+.mmpcs-field.mmpcs-field--seg {
+	flex: 0 0 auto;
+	align-items: flex-start;
+}
+
+.mmpcs-seg {
+	display: inline-flex;
+	align-items: stretch;
+	flex-shrink: 0;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	background: #fff;
+	overflow: hidden;
+}
+
+.mmpcs-seg__option {
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
+	gap: 0.25rem;
+	white-space: nowrap;
+	padding: 0.3rem 0.6rem;
+	border: 0;
+	border-inline-start: 1px solid #dcdcde;
+	background: transparent;
+	color: #50575e;
+	font-size: 0.8rem;
+	line-height: 1.6;
+	cursor: pointer;
+	transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.mmpcs-seg__option:first-child {
+	border-inline-start: 0;
+}
+
+.mmpcs-seg__option:hover {
+	background: #f0f0f1;
+	color: #1d2327;
+}
+
+.mmpcs-seg__option:focus-visible {
+	outline: 2px solid #2271b1;
+	outline-offset: -2px;
+}
+
+/* Selection is carried by fill and weight, never by colour alone. */
+.mmpcs-seg__option[aria-checked="true"] {
+	background: #2271b1;
+	color: #fff;
+	font-weight: 600;
+}
+
+.mmpcs-seg__option .dashicons {
+	font-size: 1rem;
+	width: 1rem;
+	height: 1rem;
+}
+
+.mmpcs-announce {
+	flex-basis: 100%;
+	margin: 0.25rem 0 0;
+	color: #646970;
+	font-size: 0.75rem;
+}
+
+.mmpcs-announce.is-warning {
+	color: #8a4600;
+	font-weight: 600;
+}
+
+/*
+ * A logo row is a <details>, so it must not inherit the flex layout the other
+ * repeater rows use -- that would lay the summary and the fields out side by
+ * side instead of stacking them.
+ */
+.mmpcs-row--logo {
+	display: block;
+	padding: 0;
+}
+
+.mmpcs-logo-summary {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.6rem 0.75rem;
+	cursor: pointer;
+	list-style: none;
+}
+
+/* Safari still needs the WebKit pseudo-element to drop the default marker. */
+.mmpcs-logo-summary::-webkit-details-marker {
+	display: none;
+}
+
+.mmpcs-logo-summary::before {
+	content: "\f345";
+	font-family: dashicons, sans-serif;
+	color: #50575e;
+}
+
+.mmpcs-row--logo[open] .mmpcs-logo-summary::before {
+	content: "\f347";
+}
+
+.mmpcs-logo-thumb {
+	width: 2.5rem;
+	height: 2.5rem;
+	object-fit: contain;
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 3px;
+	padding: 2px;
+}
+
+.mmpcs-logo-name {
+	font-weight: 600;
+}
+
+.mmpcs-logo-slot {
+	margin-left: auto;
+	padding: 0.1rem 0.5rem;
+	border-radius: 999px;
+	background: #e8eaed;
+	color: #50575e;
+	font-size: 0.75rem;
+}
+
+.mmpcs-logo-summary .mmpcs-remove {
+	margin-left: 0.25rem;
+}
+
+.mmpcs-logo-fields {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	gap: 0.75rem;
+	padding: 0.75rem;
+	border-top: 1px solid #dcdcde;
+	background: #fff;
+}
+
+.mmpcs-hint {
+	display: block;
+	margin-top: 0.15rem;
+	color: #646970;
+	font-size: 0.75rem;
+	font-style: italic;
+}
+
+.mmpcs-logo-layouts {
+	max-width: 60rem;
+	margin-top: 1rem;
+	padding: 0.75rem;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	background: #f6f7f7;
+}
+
+.mmpcs-logo-layouts .description {
+	margin: 0 0 0.5rem;
+	font-weight: 600;
+}
+
+.mmpcs-layout-row {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	margin-bottom: 0.35rem;
+}
+
+.mmpcs-layout-row > span {
+	min-width: 12rem;
 }
 
 .mmpcs-row--color {
@@ -128,11 +353,41 @@
 	padding-bottom: 0;
 }
 
+/*
+ * Two fixed rows -- caption, then control -- rather than a column that packs to
+ * its own content. Fields on one wrapped line then put their captions on the
+ * same baseline and their inputs on the next, whatever else a field carries
+ * below it. Aligning to flex-end instead let a tall field (the image, with its
+ * Choose button) drag its neighbours' captions out of line.
+ */
 .mmpcs-field {
-	display: flex;
-	flex-direction: column;
+	display: grid;
+	grid-template-rows: 1.4rem auto;
+	align-content: start;
 	gap: 0.25rem;
 	flex: 1 1 12rem;
+	min-inline-size: 0;
+}
+
+.mmpcs-field > span:first-child {
+	align-self: end;
+}
+
+/* The announcement is a sentence, so it takes a line of its own. */
+.mmpcs-announce {
+	flex: 1 0 100%;
+	margin: 0;
+}
+
+/*
+ * Drop the move and remove controls to the height of the first control, past
+ * the captions. Scoped away from the colour rows and the logo rows, which have
+ * no captions to clear -- there the offset would just knock them out of line.
+ */
+.mmpcs-row:not(.mmpcs-row--color):not(.mmpcs-row--logo) > .mmpcs-move,
+.mmpcs-row:not(.mmpcs-row--color):not(.mmpcs-row--logo) > .mmpcs-remove {
+	align-self: flex-start;
+	margin-block-start: 1.6rem;
 }
 
 .mmpcs-field--wide {
@@ -170,6 +425,15 @@
 }
 
 @media (max-width: 782px) {
+	.mmpcs-row--logo {
+		display: block;
+	}
+
+	.mmpcs-logo-fields {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
 	.mmpcs-row {
 		flex-direction: column;
 		align-items: stretch;
@@ -243,4 +507,229 @@
 	margin-left: 0.75rem;
 	color: #b32d2e;
 	cursor: pointer;
+}
+
+/* ---------- live preview ---------- */
+
+/*
+ * Landscape puts the pane beside the settings; portrait and anything narrow
+ * stacks it underneath. The breakpoint is orientation plus width rather than
+ * width alone, because a narrow landscape window still reads better in two
+ * columns than a wide portrait one does.
+ */
+.mmpcs-layout {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 1.5rem;
+	align-items: start;
+}
+
+@media (min-width: 1200px) and (orientation: landscape) {
+	.mmpcs-layout {
+		grid-template-columns: minmax(0, 1fr) minmax(20rem, 34rem);
+	}
+
+	.mmpcs-preview {
+		position: sticky;
+		/* Clears the admin bar so the pane does not slide under it. */
+		top: 46px;
+	}
+}
+
+.mmpcs-preview {
+	min-width: 0;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	background: #f6f7f7;
+}
+
+.mmpcs-preview__bar {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.5rem 0.75rem;
+	border-bottom: 1px solid #dcdcde;
+}
+
+.mmpcs-preview__toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.mmpcs-preview__state {
+	margin-left: auto;
+	color: #646970;
+	font-size: 0.75rem;
+}
+
+.mmpcs-preview__stage {
+	overflow: hidden;
+	background: #101c2d;
+}
+
+/*
+ * The document renders at its real desktop width and is scaled down, so the
+ * pane shows the landscape layout in miniature rather than the page's own
+ * narrow breakpoint.
+ */
+.mmpcs-preview__frame {
+	display: block;
+	border: 0;
+	transform-origin: top left;
+}
+
+.mmpcs-preview__note {
+	margin: 0;
+	padding: 0.5rem 0.75rem;
+}
+
+.mmpcs-preview.is-collapsed .mmpcs-preview__stage,
+.mmpcs-preview.is-collapsed .mmpcs-preview__note {
+	display: none;
+}
+
+/*
+ * Narrow settings column: one field per line, full width, rather than a row of
+ * inputs squeezed to a couple of characters each. Keyed to the container, so
+ * opening the preview pane triggers it exactly as narrowing the window does.
+ */
+@container mmpcs-settings (max-width: 46rem) {
+	/*
+	 * Both boxes: the row holds the move and remove controls, the inner box
+	 * holds the fields. Stacking only the outer one leaves the fields side by
+	 * side, which is the thing this rule exists to stop.
+	 */
+	.mmpcs-row,
+	.mmpcs-row__fields {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.mmpcs-field,
+	.mmpcs-field--wide,
+	.mmpcs-field--narrow {
+		flex: 1 1 auto;
+	}
+
+	.mmpcs-seg {
+		align-self: flex-start;
+	}
+
+	.mmpcs-move {
+		display: flex;
+		gap: 0.5rem;
+		/* Stretching a pair of arrows across the row makes them look like
+		   rules rather than buttons. */
+		align-self: flex-start;
+		margin-left: 0;
+	}
+}
+
+/* ---------- collapsed preview gives its width back ---------- */
+
+/*
+ * Collapsing has to return the space, not just the height: a pane that folds to
+ * a title bar still holds a whole column hostage. Collapsed, it is a rail with
+ * one icon, and the settings take the rest.
+ */
+@media (min-width: 1200px) and (orientation: landscape) {
+	.mmpcs-layout.is-preview-collapsed {
+		grid-template-columns: minmax(0, 1fr) 3rem;
+	}
+}
+
+.mmpcs-preview.is-collapsed {
+	position: sticky;
+	top: 46px;
+}
+
+.mmpcs-preview.is-collapsed .mmpcs-preview__bar {
+	flex-direction: column;
+	gap: 0.5rem;
+	padding: 0.5rem 0;
+	border-bottom: 0;
+}
+
+/* In the rail, the button is the icon; its text still names it for a reader. */
+.mmpcs-preview.is-collapsed .mmpcs-preview__toggle span:not(.dashicons) {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+.mmpcs-preview.is-collapsed .mmpcs-preview__state,
+.mmpcs-preview.is-collapsed [data-preview-popout] {
+	display: none;
+}
+
+/*
+ * Delete is a button, like Apply beside it -- two controls doing comparable
+ * jobs should not be a button and a link. It keeps a destructive colour rather
+ * than a destructive shape, so it still reads as the dangerous one.
+ */
+.mmpcs-button--delete {
+	color: #b32d2e;
+	border-color: #b32d2e;
+}
+
+.mmpcs-button--delete:hover,
+.mmpcs-button--delete:focus {
+	color: #fff;
+	border-color: #b32d2e;
+	background: #b32d2e;
+}
+
+/*
+ * Icon and label in one button. WordPress's .button is inline-block with a
+ * fixed line-height, which drops a dashicon a few pixels low and leaves it
+ * hugging the text; inline-flex puts them on one centre line with a real gap.
+ */
+.mmpcs-button--icon {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3rem;
+}
+
+.mmpcs-button--icon .dashicons {
+	width: 1.1rem;
+	height: 1.1rem;
+	font-size: 1.1rem;
+	line-height: 1;
+}
+
+/*
+ * The buttons get their own flex box inside the cell. Putting display: flex on
+ * the cell itself overrode display: table-cell, which took both the header and
+ * the body cell out of the table layout -- the column stopped being sized with
+ * the others, so the header rule ran short and the third button wrapped.
+ */
+.mmpcs-presets-actions {
+	white-space: nowrap;
+}
+
+/*
+ * nowrap on purpose. A wrapping box is content that fits any width, so the
+ * table hands the column the little it asks for and the third button drops to
+ * its own line; refusing to wrap makes the column's min-content width the width
+ * of all three, and the table sizes it properly. The narrow-column rule below
+ * is where wrapping is actually wanted.
+ */
+.mmpcs-actions {
+	display: flex;
+	flex-wrap: nowrap;
+	gap: 0.35rem;
+}
+
+@container mmpcs-settings (max-width: 46rem) {
+	.mmpcs-actions {
+		flex-wrap: wrap;
+	}
 }

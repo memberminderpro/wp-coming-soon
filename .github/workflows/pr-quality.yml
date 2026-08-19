@@ -46,7 +46,15 @@ jobs:
         run: |
           set -euo pipefail
           ! unzip -Z1 mmp-coming-soon.zip | grep -E '(^|/)(bin|\.github|docs)/'
-          ! unzip -Z1 mmp-coming-soon.zip | grep -E 'release-please|version\.txt|CHANGELOG\.md|CONTRIBUTING\.md'
+          ! unzip -Z1 mmp-coming-soon.zip | grep -E 'release-please|version\.txt|CHANGELOG\.md|CONTRIBUTING\.md|CLAUDE\.md'
+
+      # A working tree accumulates tool directories nobody planned for -- .claude
+      # and .remember were both being copied into locally built archives. The
+      # plugin ships no dotfiles, so the rule is simply that there are none.
+      - name: The archive must contain no dotfiles
+        run: |
+          set -euo pipefail
+          ! unzip -Z1 mmp-coming-soon.zip | grep -E '(^|/)\.'
 
       - name: The plugin header and the runtime constant must agree
         run: |
