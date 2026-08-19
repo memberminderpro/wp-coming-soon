@@ -197,6 +197,20 @@ html {
 	color: var(--mmpcs-text-muted);
 	font-size: clamp(15.2px, 2vw, 17.6px);
 	line-height: 1.65;
+	/*
+	 * A centered last line holding one short word reads as a mistake, so this
+	 * paragraph must not be allowed to orphan.
+	 *
+	 * Two declarations, in this order, on purpose. "pretty" is the correct tool
+	 * -- it leaves the earlier lines where they fall and only reworks the end of
+	 * the paragraph -- but Firefox does not support it and drops the whole
+	 * declaration. "balance" is supported there, and evens every line out, which
+	 * removes the orphan too; it is the blunter result, so it is stated first
+	 * and overridden wherever "pretty" is understood. Anything older than both
+	 * ignores the pair and wraps exactly as it did before.
+	 */
+	text-wrap: balance;
+	text-wrap: pretty;
 }
 
 .coming-soon__divider {
@@ -320,6 +334,9 @@ html {
 	font-size: 12.48px;
 	line-height: 1.99;
 	text-align: center;
+	/* Same reasoning as the subtitle: centered, and wraps on narrow screens. */
+	text-wrap: balance;
+	text-wrap: pretty;
 }
 
 .coming-soon__footer a {
