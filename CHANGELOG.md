@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0-beta.9](https://github.com/memberminderpro/wp-coming-soon/compare/v1.4.0-beta.8...v1.4.0-beta.9) (2026-08-19)
+
+
+### Bug Fixes
+
+* align captions and controls across a wrapped row ([#39](https://github.com/memberminderpro/wp-coming-soon/issues/39)) ([a9a9f5b](https://github.com/memberminderpro/wp-coming-soon/commit/a9a9f5becba17eccb5033ea83345a307eb3b13e3))
+
 ## [1.4.0-beta.8](https://github.com/memberminderpro/wp-coming-soon/compare/v1.4.0-beta.7...v1.4.0-beta.8) (2026-08-19)
 
 
