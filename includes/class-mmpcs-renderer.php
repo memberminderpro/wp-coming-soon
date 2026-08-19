@@ -291,15 +291,47 @@ class MMPCS_Renderer {
 		$html = '<div class="coming-soon__action-row"' . ( $is_support ? ' data-support-row' : '' ) . '>';
 
 		foreach ( $buttons as $button ) {
-			$html .= sprintf(
-				'<a class="coming-soon__button coming-soon__button--%s" href="%s" rel="noopener noreferrer" target="_blank">%s</a>',
-				esc_attr( $button['style'] ),
-				esc_url( $button['url'] ),
-				esc_html( $button['label'] )
-			);
+			$html .= empty( $button['image'] )
+				? self::text_button( $button )
+				: self::image_button( $button );
 		}
 
 		return $html . '</div>';
+	}
+
+	/**
+	 * An ordinary button: the label is the text, the style is the chrome.
+	 *
+	 * @param array $button One repeater row.
+	 * @return string
+	 */
+	private static function text_button( array $button ) {
+		return sprintf(
+			'<a class="coming-soon__button coming-soon__button--%s" href="%s" rel="noopener noreferrer" target="_blank">%s</a>',
+			esc_attr( $button['style'] ),
+			esc_url( $button['url'] ),
+			esc_html( $button['label'] )
+		);
+	}
+
+	/**
+	 * An image button: the image is the button.
+	 *
+	 * No style variant is applied, because a fill and a border around an image
+	 * that already carries its own shape is chrome on top of chrome -- which is
+	 * why the settings screen hides the style control once an image is set. The
+	 * label becomes the alt text, so the link keeps an accessible name.
+	 *
+	 * @param array $button One repeater row.
+	 * @return string
+	 */
+	private static function image_button( array $button ) {
+		return sprintf(
+			'<a class="coming-soon__button coming-soon__button--image" href="%s" rel="noopener noreferrer" target="_blank"><img class="coming-soon__button-img" src="%s" alt="%s" decoding="async"></a>',
+			esc_url( $button['url'] ),
+			esc_url( $button['image'] ),
+			esc_attr( $button['label'] )
+		);
 	}
 
 	/**

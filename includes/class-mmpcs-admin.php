@@ -881,6 +881,7 @@ class MMPCS_Admin {
 		$label = isset( $row['label'] ) ? $row['label'] : '';
 		$url   = isset( $row['url'] ) ? $row['url'] : '';
 		$style = isset( $row['style'] ) ? $row['style'] : 'ghost';
+		$image = isset( $row['image'] ) ? $row['image'] : '';
 		?>
 		<div class="mmpcs-row">
 			<span class="mmpcs-move">
@@ -896,7 +897,15 @@ class MMPCS_Admin {
 				<input type="url" class="code" name="<?php echo esc_attr( $base ); ?>[<?php echo esc_attr( $index ); ?>][url]" value="<?php echo esc_attr( $url ); ?>">
 			</label>
 			<?php if ( 'button' === $type ) : ?>
-			<label class="mmpcs-field mmpcs-field--narrow">
+			<label class="mmpcs-field mmpcs-field--wide">
+				<span><?php esc_html_e( 'Image', 'mmp-coming-soon' ); ?></span>
+				<span class="mmpcs-media">
+					<input type="url" class="code" data-button-image name="<?php echo esc_attr( $base ); ?>[<?php echo esc_attr( $index ); ?>][image]" value="<?php echo esc_attr( $image ); ?>">
+					<button type="button" class="button mmpcs-media-pick"><?php esc_html_e( 'Choose image', 'mmp-coming-soon' ); ?></button>
+				</span>
+				<span class="mmpcs-hint"><?php esc_html_e( 'Optional. An image replaces the button text, and the label above becomes its alt text.', 'mmp-coming-soon' ); ?></span>
+			</label>
+			<label class="mmpcs-field mmpcs-field--narrow" data-button-style<?php echo '' !== $image ? ' hidden' : ''; ?>>
 				<span><?php esc_html_e( 'Style', 'mmp-coming-soon' ); ?></span>
 				<select name="<?php echo esc_attr( $base ); ?>[<?php echo esc_attr( $index ); ?>][style]">
 					<?php foreach ( MMPCS_Settings::BUTTON_STYLES as $value => $name ) : ?>

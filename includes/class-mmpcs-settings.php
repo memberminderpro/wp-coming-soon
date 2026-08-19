@@ -777,8 +777,14 @@ class MMPCS_Settings {
 			$label = isset( $row['label'] ) ? sanitize_text_field( $row['label'] ) : '';
 			$url   = isset( $row['url'] ) ? esc_url_raw( trim( $row['url'] ) ) : '';
 			$style = isset( $row['style'] ) ? sanitize_key( $row['style'] ) : 'ghost';
+			$image = isset( $row['image'] ) ? esc_url_raw( trim( $row['image'] ) ) : '';
 
-			// Drop empty rows entirely so the page never emits a bare anchor.
+			/*
+			 * Drop empty rows entirely so the page never emits a bare anchor.
+			 * The label stays required even for an image button, because there
+			 * it becomes the alt text -- and a linked image with no alt text is
+			 * a link with no accessible name at all.
+			 */
 			if ( '' === $label || '' === $url ) {
 				continue;
 			}
@@ -791,6 +797,9 @@ class MMPCS_Settings {
 				'label' => $label,
 				'url'   => $url,
 				'style' => $style,
+				// An image replaces the label on the page; the style variant
+				// stops applying, because the image is the button.
+				'image' => $image,
 			);
 		}
 
