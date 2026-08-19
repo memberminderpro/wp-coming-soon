@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0-beta.2](https://github.com/memberminderpro/wp-coming-soon/compare/v1.4.0-beta.1...v1.4.0-beta.2) (2026-08-19)
+
+
+### Features
+
+* secondary logo with placement, and paragraphs in the description ([#25](https://github.com/memberminderpro/wp-coming-soon/issues/25)) ([20c9fa5](https://github.com/memberminderpro/wp-coming-soon/commit/20c9fa5afb9a100c9287fbeaa8375ceace630025))
+
 ## [1.4.0-beta.1](https://github.com/memberminderpro/wp-coming-soon/compare/v1.4.0-beta...v1.4.0-beta.1) (2026-08-19)
 
 
