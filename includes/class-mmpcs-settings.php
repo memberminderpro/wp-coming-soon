@@ -613,13 +613,29 @@ class MMPCS_Settings {
 			'intensity' => self::clamp_float( isset( $aurora['intensity'] ) ? $aurora['intensity'] : 0.82, 0.05, 1.0, 0.82 ),
 		);
 
-		// Presets and the undo slot are managed by their own handlers, never by
-		// the options form, so carry them through rather than letting a form
-		// submission drop them.
-		$existing        = get_option( MMPCS_OPTION, array() );
-		$existing        = is_array( $existing ) ? $existing : array();
-		$out['presets']  = isset( $existing['presets'] ) ? self::sanitize_presets( $existing['presets'] ) : array();
-		$out['undo']     = ( isset( $existing['undo'] ) && is_array( $existing['undo'] ) ) ? $existing['undo'] : array();
+		/*
+		 * Presets and the undo slot never come from the options form, so when
+		 * this runs as the form's sanitise callback they have to be carried
+		 * over from what is stored, or saving the form would drop them.
+		 *
+		 * But this also runs on every other write. register_setting() hooks it
+		 * to sanitize_option_mmpcs_settings, so update_option() calls it again
+		 * on whatever write() just built -- and reading the stored value there
+		 * means reading the value from *before* the write. Taking the stored
+		 * copy unconditionally therefore threw away every preset at the moment
+		 * it was saved: the handler reported success, and nothing persisted.
+		 *
+		 * So the input wins when it carries them, and the stored copy is the
+		 * fallback for when it does not.
+		 */
+		$existing = get_option( MMPCS_OPTION, array() );
+		$existing = is_array( $existing ) ? $existing : array();
+
+		$presets = array_key_exists( 'presets', $input ) ? $input['presets'] : ( isset( $existing['presets'] ) ? $existing['presets'] : array() );
+		$undo    = array_key_exists( 'undo', $input ) ? $input['undo'] : ( isset( $existing['undo'] ) ? $existing['undo'] : array() );
+
+		$out['presets'] = self::sanitize_presets( $presets );
+		$out['undo']    = is_array( $undo ) ? $undo : array();
 
 		self::flush_cache();
 
