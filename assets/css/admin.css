@@ -92,6 +92,110 @@
 	background: #f6f7f7;
 }
 
+/*
+ * A logo row is a <details>, so it must not inherit the flex layout the other
+ * repeater rows use -- that would lay the summary and the fields out side by
+ * side instead of stacking them.
+ */
+.mmpcs-row--logo {
+	display: block;
+	padding: 0;
+}
+
+.mmpcs-logo-summary {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.6rem 0.75rem;
+	cursor: pointer;
+	list-style: none;
+}
+
+/* Safari still needs the WebKit pseudo-element to drop the default marker. */
+.mmpcs-logo-summary::-webkit-details-marker {
+	display: none;
+}
+
+.mmpcs-logo-summary::before {
+	content: "\f345";
+	font-family: dashicons, sans-serif;
+	color: #50575e;
+}
+
+.mmpcs-row--logo[open] .mmpcs-logo-summary::before {
+	content: "\f347";
+}
+
+.mmpcs-logo-thumb {
+	width: 2.5rem;
+	height: 2.5rem;
+	object-fit: contain;
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 3px;
+	padding: 2px;
+}
+
+.mmpcs-logo-name {
+	font-weight: 600;
+}
+
+.mmpcs-logo-slot {
+	margin-left: auto;
+	padding: 0.1rem 0.5rem;
+	border-radius: 999px;
+	background: #e8eaed;
+	color: #50575e;
+	font-size: 0.75rem;
+}
+
+.mmpcs-logo-summary .mmpcs-remove {
+	margin-left: 0.25rem;
+}
+
+.mmpcs-logo-fields {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	gap: 0.75rem;
+	padding: 0.75rem;
+	border-top: 1px solid #dcdcde;
+	background: #fff;
+}
+
+.mmpcs-hint {
+	display: block;
+	margin-top: 0.15rem;
+	color: #646970;
+	font-size: 0.75rem;
+	font-style: italic;
+}
+
+.mmpcs-logo-layouts {
+	max-width: 60rem;
+	margin-top: 1rem;
+	padding: 0.75rem;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	background: #f6f7f7;
+}
+
+.mmpcs-logo-layouts .description {
+	margin: 0 0 0.5rem;
+	font-weight: 600;
+}
+
+.mmpcs-layout-row {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	margin-bottom: 0.35rem;
+}
+
+.mmpcs-layout-row > span {
+	min-width: 12rem;
+}
+
 .mmpcs-row--color {
 	align-items: center;
 	max-width: 22rem;
@@ -170,6 +274,15 @@
 }
 
 @media (max-width: 782px) {
+	.mmpcs-row--logo {
+		display: block;
+	}
+
+	.mmpcs-logo-fields {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
 	.mmpcs-row {
 		flex-direction: column;
 		align-items: stretch;

@@ -128,28 +128,58 @@ html {
 
 /* ---------- logo ---------- */
 
-.coming-soon__logo {
-	display: block;
-	inline-size: var(--mmpcs-logo-width, 260px);
-	max-inline-size: 100%;
-	/*
-	 * 64px reproduces the approved spacing. The Etch original put the same
-	 * .coming-soon__logo class on both the wrapper and the <img>, so its 32px
-	 * bottom margin was applied twice. The class is split here, so the value is
-	 * stated once, deliberately.
-	 */
-	margin-block-end: 64px;
+/*
+ * A slot's logos. Side by side wraps and centres, which is what a sponsor or
+ * partner row wants; stacked is the exception, chosen per slot.
+ */
+.coming-soon__logos {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	inline-size: 100%;
+}
+
+.coming-soon__logos--row {
+	flex-direction: row;
+	flex-wrap: wrap;
+	gap: 32px;
+}
+
+.coming-soon__logos--stack {
+	flex-direction: column;
+	gap: 16px;
 }
 
 /*
- * The optional second logo. It shares the primary's markup, so it has to undo
- * the two things that are specific to the hero slot: the 64px gap beneath it,
- * and the width variable, which would otherwise size every logo on the page to
- * the primary's setting.
+ * 64px under the top slot reproduces the approved spacing. Every other slot
+ * sits inside running copy and takes a tighter rhythm.
  */
-.coming-soon__logo--secondary {
-	inline-size: var(--mmpcs-logo-secondary-width, 200px);
+.coming-soon__logos--slot-top {
+	margin-block-end: 64px;
+}
+
+.coming-soon__logos--slot-after-badge,
+.coming-soon__logos--slot-after-heading,
+.coming-soon__logos--slot-after-description {
 	margin-block: 8px 32px;
+}
+
+.coming-soon__logos--slot-after-buttons {
+	margin-block-start: 40px;
+}
+
+.coming-soon__logos--slot-above-footer {
+	margin-block-end: 16px;
+}
+
+.coming-soon__logo {
+	display: block;
+	/*
+	 * Per logo, set inline by the renderer, so one slot can hold a wide
+	 * wordmark next to a square badge.
+	 */
+	inline-size: var(--mmpcs-logo-w, 200px);
+	max-inline-size: 100%;
 }
 
 .coming-soon__logo-link {
@@ -362,6 +392,10 @@ html {
 	/* Same reasoning as the subtitle: centered, and wraps on narrow screens. */
 	text-wrap: balance;
 	text-wrap: pretty;
+}
+
+.coming-soon__footer-text {
+	margin: 0;
 }
 
 .coming-soon__footer a {
