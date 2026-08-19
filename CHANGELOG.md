@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.1-beta](https://github.com/memberminderpro/wp-coming-soon/compare/v1.4.0...v1.4.1-beta) (2026-08-19)
+
+
+### Bug Fixes
+
+* say when a site is ahead of its update channel ([741b328](https://github.com/memberminderpro/wp-coming-soon/commit/741b328864674eceeaa61b76e0d8e4f3a4ec67f0))
+* say when a site is ahead of its update channel ([253becc](https://github.com/memberminderpro/wp-coming-soon/commit/253becc7aac0e969490d43c7e820fac80882b777))
+
 ## [1.4.0](https://github.com/memberminderpro/wp-coming-soon/compare/v1.3.0...v1.4.0) (2026-08-19)
 
 
