@@ -14,6 +14,11 @@ on:
     branches:
       - develop
       - main
+  # Manual trigger. A push-triggered run can sit queued indefinitely when
+  # GitHub fails to allocate a runner, and such a run can be neither cancelled
+  # nor re-run through the API. Being able to dispatch a fresh one avoids
+  # having to push a no-op commit to shake the queue loose.
+  workflow_dispatch:
 
 permissions:
   contents: read
