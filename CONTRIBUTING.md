@@ -48,6 +48,27 @@ pressing the go-button.
 Steps 4 and 5 are separate on purpose. Merging a release PR must never be the
 thing that reaches customers.
 
+### After every stable release
+
+Two chores, both easy to forget and both with confusing symptoms:
+
+1. **Back-merge `main` into `develop`.** Otherwise develop's `CHANGELOG.md`
+   lacks the entry main just gained. The next beta release edits develop's
+   changelog too, both sides differ, and the next promotion conflicts.
+2. **Baseline `.release-please-manifest.prerelease.json` on the released
+   version.** Otherwise release-please keeps incrementing the *old* version's
+   prerelease: after `1.2.0` ships you get `1.2.0-beta.2`, which sorts **below**
+   the `1.2.0` already in production while containing more than it. The beta
+   channel must always lead stable, never trail it.
+
+Do both in one pull request:
+
+```sh
+git checkout -B sync/post-X.Y.Z origin/develop
+git merge origin/main
+printf '{\n  ".": "X.Y.Z"\n}\n' > .release-please-manifest.prerelease.json
+```
+
 Never hand-edit:
 
 * the version in `mmp-coming-soon.php` (two annotated blocks)
