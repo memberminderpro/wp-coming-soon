@@ -86,11 +86,9 @@ class MMPCS_Settings {
 			'auto_update' => true,
 			'update_channel' => 'stable',
 
-			// Saved variations, and a one-slot snapshot so any destructive
-			// action can be undone. Both live in this same option row, so
-			// uninstall stays a single delete.
+			// Saved variations. Recent history lives in its own option, since
+			// this row is read on every front-end request the gate evaluates.
 			'presets'        => array(),
-			'undo'           => array(),
 
 			/*
 			 * Every logo is a row here, ordered by the repeater. Row order is
@@ -285,83 +283,16 @@ class MMPCS_Settings {
 	 */
 	private static function write( array $settings ) {
 		$presets = isset( $settings['presets'] ) ? $settings['presets'] : array();
-		$undo    = isset( $settings['undo'] ) ? $settings['undo'] : array();
 
 		$clean            = self::sanitize( $settings );
 		$clean['presets'] = self::sanitize_presets( $presets );
-		$clean['undo']    = is_array( $undo ) ? $undo : array();
 
 		update_option( MMPCS_OPTION, $clean );
 		self::flush_cache();
 	}
 
-	/**
-	 * Record what the design looks like right now, so it can be restored.
-	 *
-	 * One slot rather than a stack: the realistic mistake is the click you just
-	 * made, and a stack invites people to trust it as history when it lives in
-	 * an option row that a reset could clear.
-	 *
-	 * @param string $label What is about to happen, shown on the undo control.
-	 * @return void
-	 */
-	public static function snapshot( $label ) {
-		$settings = self::get();
 
-		$settings['undo'] = array(
-			'label' => sanitize_text_field( $label ),
-			'at'    => time(),
-			'data'  => self::portable(),
-		);
 
-		self::write( $settings );
-	}
-
-	/**
-	 * Restore the undo snapshot.
-	 *
-	 * @return string|false The label of what was undone, or false when empty.
-	 */
-	public static function undo() {
-		$settings = self::get();
-
-		if ( empty( $settings['undo']['data'] ) || ! is_array( $settings['undo']['data'] ) ) {
-			return false;
-		}
-
-		$label = isset( $settings['undo']['label'] ) ? $settings['undo']['label'] : '';
-
-		foreach ( $settings['undo']['data'] as $key => $value ) {
-			if ( in_array( $key, self::portable_keys(), true ) ) {
-				$settings[ $key ] = $value;
-			}
-		}
-
-		// Undo is not itself undoable; clear the slot so the control disappears.
-		$settings['undo'] = array();
-
-		self::write( $settings );
-
-		return $label;
-	}
-
-	/**
-	 * Is there something to undo?
-	 *
-	 * @return array|false The snapshot metadata, or false.
-	 */
-	public static function undoable() {
-		$settings = self::get();
-
-		if ( empty( $settings['undo']['data'] ) ) {
-			return false;
-		}
-
-		return array(
-			'label' => isset( $settings['undo']['label'] ) ? $settings['undo']['label'] : '',
-			'at'    => isset( $settings['undo']['at'] ) ? (int) $settings['undo']['at'] : 0,
-		);
-	}
 
 	/**
 	 * Reset one section, or everything, to the shipped defaults.
@@ -374,14 +305,10 @@ class MMPCS_Settings {
 		$current  = self::get();
 
 		if ( 'all' === $section ) {
-			self::snapshot( __( 'Reset all settings', 'mmp-coming-soon' ) );
-
-			$current = self::get();
-
-			// Presets and the undo slot are the administrator's own work, not
-			// configuration, so a reset must not destroy them.
+			// Presets are the administrator's own work, not configuration, so
+			// a reset must not destroy them. History is a separate option and
+			// is not touched by this at all.
 			$defaults['presets'] = $current['presets'];
-			$defaults['undo']    = $current['undo'];
 
 			self::write( $defaults );
 
@@ -391,9 +318,6 @@ class MMPCS_Settings {
 		if ( ! isset( self::SECTIONS[ $section ] ) ) {
 			return false;
 		}
-
-		/* translators: %s: section name, e.g. background. */
-		self::snapshot( sprintf( __( 'Reset %s to defaults', 'mmp-coming-soon' ), $section ) );
 
 		$settings = self::get();
 
@@ -409,11 +333,10 @@ class MMPCS_Settings {
 	/**
 	 * Apply a portable payload over the current settings.
 	 *
-	 * @param array  $payload Portable settings.
-	 * @param string $label   Undo label; empty skips the snapshot.
+	 * @param array $payload Portable settings.
 	 * @return bool Whether anything was applied.
 	 */
-	public static function apply_portable( array $payload, $label = '' ) {
+	public static function apply_portable( array $payload ) {
 		// An export or preset written before the repeater carries the old keys.
 		$payload = self::migrate_legacy_logos( $payload );
 		$payload = self::migrate_legacy_buttons( $payload );
@@ -423,10 +346,6 @@ class MMPCS_Settings {
 
 		if ( empty( $usable ) ) {
 			return false;
-		}
-
-		if ( '' !== $label ) {
-			self::snapshot( $label );
 		}
 
 		$settings = self::get();
@@ -642,7 +561,7 @@ class MMPCS_Settings {
 		);
 
 		/*
-		 * Presets and the undo slot never come from the options form, so when
+		 * Presets never come from the options form, so when
 		 * this runs as the form's sanitise callback they have to be carried
 		 * over from what is stored, or saving the form would drop them.
 		 *
@@ -652,6 +571,7 @@ class MMPCS_Settings {
 		 * means reading the value from *before* the write. Taking the stored
 		 * copy unconditionally therefore threw away every preset at the moment
 		 * it was saved: the handler reported success, and nothing persisted.
+		 * The same fault destroyed the undo slot, now replaced by MMPCS_History.
 		 *
 		 * So the input wins when it carries them, and the stored copy is the
 		 * fallback for when it does not.
@@ -660,10 +580,8 @@ class MMPCS_Settings {
 		$existing = is_array( $existing ) ? $existing : array();
 
 		$presets = array_key_exists( 'presets', $input ) ? $input['presets'] : ( isset( $existing['presets'] ) ? $existing['presets'] : array() );
-		$undo    = array_key_exists( 'undo', $input ) ? $input['undo'] : ( isset( $existing['undo'] ) ? $existing['undo'] : array() );
 
 		$out['presets'] = self::sanitize_presets( $presets );
-		$out['undo']    = is_array( $undo ) ? $undo : array();
 
 		self::flush_cache();
 

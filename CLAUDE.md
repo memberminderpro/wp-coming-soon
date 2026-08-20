@@ -68,8 +68,11 @@ alone.
 * **A button's accessible name must contain its visible text.** WCAG 2.5.3: a
   name that replaces the visible label makes the control unreachable by voice.
   The renderer drops a clashing name rather than emitting it.
-* **One option row.** Everything — settings, presets, undo snapshot — lives in
-  `mmpcs_settings`. No pages, posts, tables, uploads, user meta, or cron events.
+* **Two option rows.** Configuration and presets live in `mmpcs_settings`;
+  recent history lives in `mmpcs_history`, never autoloaded, because the gate
+  reads the settings row on every front-end request and 25 history entries are
+  about 56 KB. `uninstall.php` sweeps every `mmpcs_*` option, so both go.
+  Historically this said "one option row". No pages, posts, tables, uploads, user meta, or cron events.
   That is what lets `uninstall.php` remove every trace. Anything a future version
   persists must also be added to the uninstall sweep.
 * **The renderer never calls `wp_head()` or `wp_footer()`.** That is the whole

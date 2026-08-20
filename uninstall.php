@@ -23,6 +23,7 @@ function mmpcs_purge_site() {
 	global $wpdb;
 
 	delete_option( 'mmpcs_settings' );
+	delete_option( 'mmpcs_history' );
 
 	// Any option or transient this plugin could have created.
 	$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
