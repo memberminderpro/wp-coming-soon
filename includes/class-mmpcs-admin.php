@@ -283,8 +283,15 @@ class MMPCS_Admin {
 			return;
 		}
 
+		/*
+		 * A success notice rather than a standing bar: dismissible, timed, and
+		 * shown only on the tab it belongs to. The undo itself does not expire
+		 * with it -- the Presets panel keeps a control for as long as there is
+		 * something to undo, so dismissing the notice loses the reminder and
+		 * not the way back.
+		 */
 		?>
-		<div class="notice notice-info mmpcs-undo">
+		<div class="notice notice-success is-dismissible mmpcs-undo" data-mmpcs-undo data-timeout="20000" hidden>
 			<p>
 				<strong><?php echo esc_html( $undo['label'] ); ?></strong>
 				<?php if ( $undo['at'] ) : ?>
@@ -355,6 +362,28 @@ class MMPCS_Admin {
 				</button>
 			</p>
 
+			<?php $undo = MMPCS_Settings::undoable(); ?>
+			<?php if ( $undo ) : ?>
+				<p class="mmpcs-undo-standing">
+					<strong><?php echo esc_html( $undo['label'] ); ?></strong>
+					<?php if ( $undo['at'] ) : ?>
+						<span class="mmpcs-undo-when">
+							<?php
+							printf(
+								/* translators: %s: human readable time difference. */
+								esc_html__( '%s ago', 'mmp-coming-soon' ),
+								esc_html( human_time_diff( $undo['at'] ) )
+							);
+							?>
+						</span>
+					<?php endif; ?>
+					<button type="submit" form="mmpcs-undo-form" class="button button-secondary mmpcs-button--icon">
+						<span class="dashicons dashicons-undo" aria-hidden="true"></span>
+						<?php esc_html_e( 'Undo', 'mmp-coming-soon' ); ?>
+					</button>
+				</p>
+			<?php endif; ?>
+
 			<?php if ( empty( $s['presets'] ) ) : ?>
 				<p><em><?php esc_html_e( 'No presets saved yet.', 'mmp-coming-soon' ); ?></em></p>
 			<?php else : ?>
@@ -363,6 +392,7 @@ class MMPCS_Admin {
 						<tr>
 							<th scope="col"><?php esc_html_e( 'Preset', 'mmp-coming-soon' ); ?></th>
 							<th scope="col"><?php esc_html_e( 'Saved', 'mmp-coming-soon' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Last applied', 'mmp-coming-soon' ); ?></th>
 							<th scope="col" class="mmpcs-presets-actions"><?php esc_html_e( 'Actions', 'mmp-coming-soon' ); ?></th>
 						</tr>
 					</thead>
@@ -375,6 +405,20 @@ class MMPCS_Admin {
 								echo $preset['saved_at']
 									? esc_html( sprintf( /* translators: %s: time difference. */ __( '%s ago', 'mmp-coming-soon' ), human_time_diff( $preset['saved_at'] ) ) )
 									: '&mdash;';
+								?>
+							</td>
+							<td>
+								<?php
+								// Blank until it has been applied from this screen.
+								echo empty( $preset['applied_at'] )
+									? '<span class="mmpcs-never">&mdash;</span>'
+									: esc_html(
+										sprintf(
+											/* translators: %s: human readable time difference. */
+											__( '%s ago', 'mmp-coming-soon' ),
+											human_time_diff( $preset['applied_at'] )
+										)
+									);
 								?>
 							</td>
 							<td class="mmpcs-presets-actions">
