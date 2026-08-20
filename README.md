@@ -103,6 +103,20 @@ Responses are `200` with `noindex, nofollow` (both a meta tag and an
 `X-Robots-Tag` header) and a revalidating `Cache-Control`, so a page cache does
 not keep serving the holding page after you switch it off.
 
+### Page caches
+
+Switching the gate on, or changing the allowlist, purges every page cache the
+plugin can reach — LiteSpeed, WP Rocket, W3 Total Cache, WP Super Cache, Cache
+Enabler, Nginx Helper, Breeze, SG Optimizer, WP Engine — and fires
+`mmpcs_purge_caches` for anything else.
+
+A cache in front of WordPress is a different matter. It answers without running
+PHP, so the plugin never sees the request and cannot intervene: the site keeps
+serving to the world while the settings screen says it is hidden. If your host
+caches HTML, purge it after switching on and confirm in a private window.
+Appending a query string to a URL is a quick way to force a cache miss and see
+what WordPress itself would return.
+
 Developers can override the decision:
 
 ```php

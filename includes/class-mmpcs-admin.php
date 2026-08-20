@@ -531,6 +531,10 @@ class MMPCS_Admin {
 						<p class="description">
 							<?php esc_html_e( 'Signed-in WordPress users always see the real site, including the front page set in Settings → Reading. Logins, the admin, the REST API, feeds, and sitemaps are never blocked.', 'mmp-coming-soon' ); ?>
 						</p>
+						<p class="description mmpcs-cache-warning">
+							<span class="dashicons dashicons-warning" aria-hidden="true"></span>
+							<?php esc_html_e( 'Changing this clears every page cache the plugin can reach. A cache that sits in front of WordPress — your host\'s, or a CDN caching HTML — answers without running any of this, and can keep serving the real site to visitors after you switch it on. If you use one, purge it, then check in a private window.', 'mmp-coming-soon' ); ?>
+						</p>
 					</td>
 				</tr>
 				<tr>

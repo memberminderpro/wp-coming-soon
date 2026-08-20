@@ -56,6 +56,7 @@ if ( ! defined( 'MMPCS_UPDATE_MANIFEST' ) ) {
  */
 
 require_once MMPCS_DIR . 'includes/class-mmpcs-settings.php';
+require_once MMPCS_DIR . 'includes/class-mmpcs-cache.php';
 require_once MMPCS_DIR . 'includes/class-mmpcs-history.php';
 require_once MMPCS_DIR . 'includes/class-mmpcs-aurora.php';
 require_once MMPCS_DIR . 'includes/class-mmpcs-renderer.php';
@@ -76,6 +77,7 @@ if ( is_admin() ) {
  */
 function mmpcs_bootstrap() {
 	MMPCS_Frontend::init();
+	MMPCS_Cache::init();
 	MMPCS_Updater::init();
 	MMPCS_Admin_Bar::init();
 
