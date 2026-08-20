@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0-beta.1](https://github.com/memberminderpro/wp-coming-soon/compare/v1.5.0-beta...v1.5.0-beta.1) (2026-08-20)
+
+
+### Features
+
+* keep recent history and let the design step backwards ([#59](https://github.com/memberminderpro/wp-coming-soon/issues/59)) ([690d828](https://github.com/memberminderpro/wp-coming-soon/commit/690d828e0aefd5825ca83b65f4df638739714e30))
+
 ## [1.5.0-beta](https://github.com/memberminderpro/wp-coming-soon/compare/v1.4.1-beta...v1.5.0-beta) (2026-08-20)
 
 
