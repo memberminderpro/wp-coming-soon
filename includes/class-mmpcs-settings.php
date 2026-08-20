@@ -479,6 +479,32 @@ class MMPCS_Settings {
 	 * @param string $name Preset name.
 	 * @return void
 	 */
+	/**
+	 * Stamp a preset with the moment it was applied.
+	 *
+	 * Kept on the preset rather than inferred from the undo slot, because the
+	 * undo slot holds one change and is cleared once used -- it cannot answer
+	 * "when was this preset last applied" for a list of them.
+	 *
+	 * @param string $name Preset name.
+	 * @return void
+	 */
+	public static function mark_preset_applied( $name ) {
+		$settings = self::get();
+		$touched  = false;
+
+		foreach ( $settings['presets'] as $index => $preset ) {
+			if ( isset( $preset['name'] ) && 0 === strcasecmp( $preset['name'], $name ) ) {
+				$settings['presets'][ $index ]['applied_at'] = time();
+				$touched                                     = true;
+			}
+		}
+
+		if ( $touched ) {
+			self::write( $settings );
+		}
+	}
+
 	public static function delete_preset( $name ) {
 		$settings = self::get();
 		$presets  = array();
@@ -535,6 +561,8 @@ class MMPCS_Settings {
 			$out[] = array(
 				'name'     => $name,
 				'saved_at' => isset( $preset['saved_at'] ) ? (int) $preset['saved_at'] : time(),
+				// Zero until it has been applied from the settings screen.
+				'applied_at' => isset( $preset['applied_at'] ) ? (int) $preset['applied_at'] : 0,
 				'data'     => array_intersect_key( $data, array_flip( self::portable_keys() ) ),
 			);
 		}

@@ -142,6 +142,7 @@ class MMPCS_Tools {
 		$label = sprintf( __( 'Applied preset "%s"', 'mmp-coming-soon' ), $preset['name'] );
 
 		MMPCS_Settings::apply_portable( $preset['data'], $label );
+		MMPCS_Settings::mark_preset_applied( $preset['name'] );
 
 		self::back( 'preset_applied', 'presets' );
 	}

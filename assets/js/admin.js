@@ -1101,6 +1101,61 @@
 	}
 
 	/**
+	 * The undo notice: shown on the Presets tab, dismissible, and gone after a
+	 * while if it is left alone.
+	 *
+	 * It is only the reminder. The Presets panel carries a standing Undo control
+	 * for as long as there is something to undo, so nothing is lost when this
+	 * disappears.
+	 */
+	function initUndoNotice() {
+		var notice = document.querySelector( '[data-mmpcs-undo]' );
+
+		if ( ! notice ) {
+			return;
+		}
+
+		var timer;
+		var dismissed = false;
+
+		function hide() {
+			notice.hidden = true;
+			window.clearTimeout( timer );
+		}
+
+		function sync() {
+			var active = document.querySelector( '.mmpcs-tab.is-active' );
+			var onTab  = active && 'presets' === active.dataset.tab;
+
+			if ( dismissed || ! onTab ) {
+				hide();
+
+				return;
+			}
+
+			notice.hidden = false;
+
+			window.clearTimeout( timer );
+			timer = window.setTimeout( hide, parseInt( notice.dataset.timeout, 10 ) || 20000 );
+		}
+
+		// WordPress adds the dismiss button itself; catching the click keeps it
+		// dismissed rather than having a tab switch bring it back.
+		notice.addEventListener( 'click', function ( event ) {
+			if ( event.target.closest( '.notice-dismiss' ) ) {
+				dismissed = true;
+				hide();
+			}
+		} );
+
+		document.querySelectorAll( '.mmpcs-tab' ).forEach( function ( tab ) {
+			tab.addEventListener( 'click', sync );
+		} );
+
+		sync();
+	}
+
+	/**
 	 * Confirm anything destructive before it submits.
 	 */
 	function initConfirms() {
@@ -1123,6 +1178,7 @@
 		initLogos();
 		initButtons();
 		initImportGate();
+		initUndoNotice();
 		initPreview();
 	} );
 }( window.jQuery ) );
