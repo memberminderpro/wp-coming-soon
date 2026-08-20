@@ -96,10 +96,15 @@ plugin header and the `MMPCS_VERSION` constant agree.
 
 ## Design constraints worth preserving
 
-* **One option row.** The plugin stores everything in `mmpcs_settings` and
-  creates no pages, posts, tables, uploads, user meta, or cron events. That is
-  what lets `uninstall.php` remove every trace. Anything a future version
-  persists must be added to the uninstall sweep.
+* **Two option rows, and nothing else.** Configuration lives in
+  `mmpcs_settings`; recent history lives in `mmpcs_history`, which is never
+  autoloaded. The plugin creates no pages, posts, tables, uploads, user meta, or
+  cron events. That is what lets `uninstall.php` remove every trace. Anything a
+  future version persists must be added to the uninstall sweep.
+* **Keep `mmpcs_settings` small.** The gate calls `MMPCS_Settings::get()` on
+  every front-end request it evaluates, so that row is read constantly. History
+  is a separate option for exactly this reason: twenty-five entries are about
+  56 KB, which the front end has no use for.
 * **The renderer never calls `wp_head()` or `wp_footer()`.** That is the
   mechanism that makes the page immune to the host site's theme and plugins.
 * **No dependency on AutomaticCSS or Etch.** Every length is an absolute `px`

@@ -56,6 +56,7 @@ if ( ! defined( 'MMPCS_UPDATE_MANIFEST' ) ) {
  */
 
 require_once MMPCS_DIR . 'includes/class-mmpcs-settings.php';
+require_once MMPCS_DIR . 'includes/class-mmpcs-history.php';
 require_once MMPCS_DIR . 'includes/class-mmpcs-aurora.php';
 require_once MMPCS_DIR . 'includes/class-mmpcs-renderer.php';
 require_once MMPCS_DIR . 'includes/class-mmpcs-frontend.php';

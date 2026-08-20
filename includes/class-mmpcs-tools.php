@@ -32,7 +32,7 @@ class MMPCS_Tools {
 	 * @return void
 	 */
 	public static function init() {
-		$actions = array( 'reset', 'undo', 'preset_save', 'preset_apply', 'preset_delete', 'preset_export', 'export', 'import' );
+		$actions = array( 'reset', 'history_restore', 'preset_save', 'preset_apply', 'preset_delete', 'preset_export', 'export', 'import' );
 
 		foreach ( $actions as $action ) {
 			add_action( 'admin_post_mmpcs_' . $action, array( __CLASS__, 'handle_' . $action ) );
@@ -84,6 +84,15 @@ class MMPCS_Tools {
 
 		$section = isset( $_POST['section'] ) ? sanitize_key( wp_unslash( $_POST['section'] ) ) : '';
 
+		MMPCS_History::record(
+			'all' === $section
+				? __( 'Before resetting everything', 'mmp-coming-soon' )
+				/* translators: %s: section name, e.g. background. */
+				: sprintf( __( 'Before resetting %s', 'mmp-coming-soon' ), $section )
+		);
+
+		$section = isset( $_POST['section'] ) ? sanitize_key( wp_unslash( $_POST['section'] ) ) : '';
+
 		if ( 'all' !== $section && ! isset( MMPCS_Settings::SECTIONS[ $section ] ) ) {
 			self::back( 'reset_failed' );
 		}
@@ -94,15 +103,23 @@ class MMPCS_Tools {
 	}
 
 	/**
-	 * Undo the last destructive change.
+	 * Step the design back to an earlier entry.
 	 *
 	 * @return void
 	 */
-	public static function handle_undo() {
-		self::guard( 'undo' );
+	public static function handle_history_restore() {
+		self::guard( 'history_restore' );
 
-		self::back( false === MMPCS_Settings::undo() ? 'undo_empty' : 'undone' );
+		$id      = isset( $_POST['history_id'] ) ? (int) $_POST['history_id'] : 0;
+		$entry   = $id ? MMPCS_History::restore( $id ) : false;
+
+		if ( ! $entry ) {
+			self::back( 'history_missing', 'presets' );
+		}
+
+		self::back( 'history_restored', 'presets' );
 	}
+
 
 	/**
 	 * Save the current design as a named preset.
@@ -139,9 +156,9 @@ class MMPCS_Tools {
 		}
 
 		/* translators: %s: preset name. */
-		$label = sprintf( __( 'Applied preset "%s"', 'mmp-coming-soon' ), $preset['name'] );
+		MMPCS_History::record( sprintf( __( 'Before applying preset "%s"', 'mmp-coming-soon' ), $preset['name'] ) );
 
-		MMPCS_Settings::apply_portable( $preset['data'], $label );
+		MMPCS_Settings::apply_portable( $preset['data'] );
 		MMPCS_Settings::mark_preset_applied( $preset['name'] );
 
 		self::back( 'preset_applied', 'presets' );
@@ -270,7 +287,9 @@ class MMPCS_Tools {
 			self::back( 'import_wrong_type', 'presets' );
 		}
 
-		if ( ! MMPCS_Settings::apply_portable( $data['settings'], __( 'Imported settings from a file', 'mmp-coming-soon' ) ) ) {
+		MMPCS_History::record( __( 'Before importing a file', 'mmp-coming-soon' ) );
+
+		if ( ! MMPCS_Settings::apply_portable( $data['settings'] ) ) {
 			self::back( 'import_empty', 'presets' );
 		}
 

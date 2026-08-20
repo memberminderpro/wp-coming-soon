@@ -53,6 +53,21 @@ control says what they can see, so an accessible name that replaces the visible
 text makes the button unreachable. The settings screen shows what will be
 announced as you type, and warns when a name is being ignored.
 
+### Recent history
+
+Applying a preset, resetting a section, importing a file or stepping back all
+record what the design looked like immediately beforehand, under **Presets →
+Recent history**. Twenty-five entries are kept, newest first, each labelled with
+what happened next — so getting lost is a matter of stepping backwards until it
+looks right, rather than having remembered to save something first.
+
+Stepping back records the current design too, so it is reversible in turn, and
+the screen then offers to keep what you landed on as a named preset.
+
+History lives in its own option and is never autoloaded: the coming soon gate
+reads the settings row on every request it evaluates, and history has no business
+being in it.
+
 ### Logos
 
 There is no primary logo. Every logo is a row in one repeater, and each row
@@ -210,8 +225,8 @@ add_filter( 'mmpcs_update_manifest_url', function ( $url, $channel ) {
 
 ## Uninstall
 
-Deleting the plugin removes everything. It stores exactly one option row
-(`mmpcs_settings`) and creates no pages, posts, custom tables, uploads, user
+Deleting the plugin removes everything. It stores two option rows
+(`mmpcs_settings` and `mmpcs_history`) and creates no pages, posts, custom tables, uploads, user
 meta, or cron events, so nothing survives removal. `uninstall.php` also sweeps
 for any `mmpcs_*` option, transient, user meta, or scheduled hook, and repeats
 the sweep on every site of a multisite network.

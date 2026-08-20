@@ -740,26 +740,22 @@
 	}
 }
 
-/* The standing undo, which outlives the notice. */
-.mmpcs-undo-standing {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-	flex-wrap: wrap;
-	max-width: 60rem;
-	margin: 0 0 1rem;
-	padding: 0.6rem 0.75rem;
-	border: 1px solid #dcdcde;
-	border-left: 4px solid #72aee6;
-	border-radius: 4px;
-	background: #f6f7f7;
-}
-
-.mmpcs-undo-when {
-	color: #646970;
-}
-
 /* A preset that has never been applied says so quietly. */
 .mmpcs-never {
 	color: #8c8f94;
+}
+
+/* Recent history reads like the presets table beside it. */
+.mmpcs-history {
+	max-width: 60rem;
+	margin-bottom: 1rem;
+}
+
+.mmpcs-history td:first-child {
+	white-space: nowrap;
+}
+
+.mmpcs-keep-this {
+	max-width: 60rem;
+	margin: 0 0 1rem;
 }

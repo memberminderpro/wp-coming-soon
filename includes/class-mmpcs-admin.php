@@ -162,7 +162,6 @@ class MMPCS_Admin {
 			<h1><?php esc_html_e( 'Coming Soon', 'mmp-coming-soon' ); ?></h1>
 
 			<?php self::render_notice(); ?>
-			<?php self::render_undo(); ?>
 
 			<?php if ( isset( $_GET['mmpcs_result'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
 				<?php if ( 'ok' === $_GET['mmpcs_result'] ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
@@ -245,8 +244,8 @@ class MMPCS_Admin {
 			'reset_section'     => array( 'success', __( 'That section was reset to its defaults.', 'mmp-coming-soon' ) ),
 			'reset_all'         => array( 'success', __( 'All settings were reset to their defaults.', 'mmp-coming-soon' ) ),
 			'reset_failed'      => array( 'error', __( 'Nothing was reset — that section is not recognised.', 'mmp-coming-soon' ) ),
-			'undone'            => array( 'success', __( 'The last change was undone.', 'mmp-coming-soon' ) ),
-			'undo_empty'        => array( 'warning', __( 'There was nothing to undo.', 'mmp-coming-soon' ) ),
+			'history_restored'  => array( 'success', __( 'Stepped back. What you had before this is in the history too.', 'mmp-coming-soon' ) ),
+			'history_missing'   => array( 'error', __( 'That history entry is no longer available.', 'mmp-coming-soon' ) ),
 			'preset_saved'      => array( 'success', __( 'Preset saved.', 'mmp-coming-soon' ) ),
 			'preset_applied'    => array( 'success', __( 'Preset applied. You can undo this.', 'mmp-coming-soon' ) ),
 			'preset_deleted'    => array( 'success', __( 'Preset deleted.', 'mmp-coming-soon' ) ),
@@ -271,47 +270,6 @@ class MMPCS_Admin {
 		);
 	}
 
-	/**
-	 * The undo control, shown only when there is something to undo.
-	 *
-	 * @return void
-	 */
-	private static function render_undo() {
-		$undo = MMPCS_Settings::undoable();
-
-		if ( ! $undo ) {
-			return;
-		}
-
-		/*
-		 * A success notice rather than a standing bar: dismissible, timed, and
-		 * shown only on the tab it belongs to. The undo itself does not expire
-		 * with it -- the Presets panel keeps a control for as long as there is
-		 * something to undo, so dismissing the notice loses the reminder and
-		 * not the way back.
-		 */
-		?>
-		<div class="notice notice-success is-dismissible mmpcs-undo" data-mmpcs-undo data-timeout="20000" hidden>
-			<p>
-				<strong><?php echo esc_html( $undo['label'] ); ?></strong>
-				<?php if ( $undo['at'] ) : ?>
-					<span class="mmpcs-undo-when">
-						<?php
-						printf(
-							/* translators: %s: human readable time difference. */
-							esc_html__( '%s ago', 'mmp-coming-soon' ),
-							esc_html( human_time_diff( $undo['at'] ) )
-						);
-						?>
-					</span>
-				<?php endif; ?>
-				<button type="submit" form="mmpcs-undo-form" class="button button-secondary">
-					<?php esc_html_e( 'Undo', 'mmp-coming-soon' ); ?>
-				</button>
-			</p>
-		</div>
-		<?php
-	}
 
 	/**
 	 * A reset control for one section, submitted through the shared reset form.
@@ -352,6 +310,16 @@ class MMPCS_Admin {
 				<?php esc_html_e( 'A preset stores the look and the wording — logo, badge, heading, description, buttons, footer, background and colours. It deliberately does not store whether the coming soon page is switched on, the always-public paths, or the update channel, so applying one can never take a site offline or move it to another channel.', 'mmp-coming-soon' ); ?>
 			</p>
 
+			<?php // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
+			<?php if ( isset( $_GET['mmpcs_notice'] ) && 'history_restored' === $_GET['mmpcs_notice'] ) : ?>
+				<div class="notice notice-success mmpcs-keep-this inline">
+					<p>
+						<strong><?php esc_html_e( 'Stepped back.', 'mmp-coming-soon' ); ?></strong>
+						<?php esc_html_e( 'Keep this one by giving it a name.', 'mmp-coming-soon' ); ?>
+					</p>
+				</div>
+			<?php endif; ?>
+
 			<p>
 				<label for="mmpcs-preset-name" class="screen-reader-text"><?php esc_html_e( 'Preset name', 'mmp-coming-soon' ); ?></label>
 				<input type="text" id="mmpcs-preset-name" name="preset_name" form="mmpcs-preset-save-form"
@@ -361,28 +329,6 @@ class MMPCS_Admin {
 					<?php esc_html_e( 'Save current settings as a preset', 'mmp-coming-soon' ); ?>
 				</button>
 			</p>
-
-			<?php $undo = MMPCS_Settings::undoable(); ?>
-			<?php if ( $undo ) : ?>
-				<p class="mmpcs-undo-standing">
-					<strong><?php echo esc_html( $undo['label'] ); ?></strong>
-					<?php if ( $undo['at'] ) : ?>
-						<span class="mmpcs-undo-when">
-							<?php
-							printf(
-								/* translators: %s: human readable time difference. */
-								esc_html__( '%s ago', 'mmp-coming-soon' ),
-								esc_html( human_time_diff( $undo['at'] ) )
-							);
-							?>
-						</span>
-					<?php endif; ?>
-					<button type="submit" form="mmpcs-undo-form" class="button button-secondary mmpcs-button--icon">
-						<span class="dashicons dashicons-undo" aria-hidden="true"></span>
-						<?php esc_html_e( 'Undo', 'mmp-coming-soon' ); ?>
-					</button>
-				</p>
-			<?php endif; ?>
 
 			<?php if ( empty( $s['presets'] ) ) : ?>
 				<p><em><?php esc_html_e( 'No presets saved yet.', 'mmp-coming-soon' ); ?></em></p>
@@ -448,6 +394,52 @@ class MMPCS_Admin {
 				</table>
 			<?php endif; ?>
 
+			<h2><?php esc_html_e( 'Recent history', 'mmp-coming-soon' ); ?></h2>
+			<p class="description">
+				<?php esc_html_e( 'Applying a preset, resetting a section, importing a file or stepping back all record what the design looked like beforehand. Step back through them until it looks right, then save that as a preset to keep it.', 'mmp-coming-soon' ); ?>
+			</p>
+
+			<?php $history = MMPCS_History::all(); ?>
+			<?php if ( empty( $history ) ) : ?>
+				<p><em><?php esc_html_e( 'Nothing yet. History starts the first time you apply, reset or import something.', 'mmp-coming-soon' ); ?></em></p>
+			<?php else : ?>
+				<table class="widefat striped mmpcs-history">
+					<thead>
+						<tr>
+							<th scope="col"><?php esc_html_e( 'When', 'mmp-coming-soon' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'What happened next', 'mmp-coming-soon' ); ?></th>
+							<th scope="col" class="mmpcs-presets-actions"><?php esc_html_e( 'Actions', 'mmp-coming-soon' ); ?></th>
+						</tr>
+					</thead>
+					<tbody>
+					<?php foreach ( $history as $entry ) : ?>
+						<tr>
+							<td>
+								<?php
+								printf(
+									/* translators: %s: human readable time difference. */
+									esc_html__( '%s ago', 'mmp-coming-soon' ),
+									esc_html( human_time_diff( $entry['at'] ) )
+								);
+								?>
+							</td>
+							<td><?php echo esc_html( $entry['label'] ); ?></td>
+							<td class="mmpcs-presets-actions">
+								<div class="mmpcs-actions">
+									<button type="submit" form="mmpcs-history-form" name="history_id"
+										value="<?php echo esc_attr( $entry['id'] ); ?>" class="button button-secondary mmpcs-button--icon"
+										data-confirm="<?php esc_attr_e( 'Step the design back to this point? What you have now is recorded first, so this is reversible too.', 'mmp-coming-soon' ); ?>">
+										<span class="dashicons dashicons-undo" aria-hidden="true"></span>
+										<?php esc_html_e( 'Step back', 'mmp-coming-soon' ); ?>
+									</button>
+								</div>
+							</td>
+						</tr>
+					<?php endforeach; ?>
+					</tbody>
+				</table>
+			<?php endif; ?>
+
 			<h2><?php esc_html_e( 'Move settings between sites', 'mmp-coming-soon' ); ?></h2>
 			<table class="form-table" role="presentation">
 				<tr>
@@ -485,7 +477,7 @@ class MMPCS_Admin {
 	private static function tool_forms() {
 		$forms = array(
 			'reset'         => 'mmpcs-reset-form',
-			'undo'          => 'mmpcs-undo-form',
+			'history_restore' => 'mmpcs-history-form',
 			'preset_save'   => 'mmpcs-preset-save-form',
 			'preset_apply'  => 'mmpcs-preset-apply-form',
 			'preset_delete' => 'mmpcs-preset-delete-form',
