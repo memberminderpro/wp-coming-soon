@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0-beta](https://github.com/memberminderpro/wp-coming-soon/compare/v1.4.1-beta...v1.5.0-beta) (2026-08-20)
+
+
+### Features
+
+* record when a preset was applied, and let the notice go away ([#57](https://github.com/memberminderpro/wp-coming-soon/issues/57)) ([656eee6](https://github.com/memberminderpro/wp-coming-soon/commit/656eee62fb9a255f3b6cb813f2ae6e19b05a280d))
+
 ## [1.4.1-beta](https://github.com/memberminderpro/wp-coming-soon/compare/v1.4.0...v1.4.1-beta) (2026-08-19)
 
 
