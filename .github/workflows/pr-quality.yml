@@ -42,11 +42,24 @@ jobs:
           echo "$ROOTS"
           test "$ROOTS" = "mmp-coming-soon"
 
+      # Each check is an explicit `if ... exit 1`, not `! cmd`: errexit ignores a
+      # failed `!` command, so only the last such line could ever fail the step.
+      # And no `grep -q`: it exits on the first match, unzip then dies of
+      # SIGPIPE, and pipefail turns the match into a pass.
+      #
+      # bin/ and docs/ are forbidden at the plugin root only, matching the
+      # anchored excludes in bin/build-zip.sh; a nested bin/ is plugin code.
       - name: Build tooling must not ship to customer sites
         run: |
           set -euo pipefail
-          ! unzip -Z1 mmp-coming-soon.zip | grep -E '(^|/)(bin|\.github|docs)/'
-          ! unzip -Z1 mmp-coming-soon.zip | grep -E 'release-please|version\.txt|CHANGELOG\.md|CONTRIBUTING\.md|CLAUDE\.md'
+          if unzip -Z1 mmp-coming-soon.zip | grep -E '^mmp-coming-soon/(bin|\.github|docs)/'; then
+            echo "::error::build tooling found in the archive"
+            exit 1
+          fi
+          if unzip -Z1 mmp-coming-soon.zip | grep -E 'release-please|version\.txt|CHANGELOG\.md|CONTRIBUTING\.md|CLAUDE\.md'; then
+            echo "::error::release or agent files found in the archive"
+            exit 1
+          fi
 
       # A working tree accumulates tool directories nobody planned for -- .claude
       # and .remember were both being copied into locally built archives. The
@@ -54,7 +67,10 @@ jobs:
       - name: The archive must contain no dotfiles
         run: |
           set -euo pipefail
-          ! unzip -Z1 mmp-coming-soon.zip | grep -E '(^|/)\.'
+          if unzip -Z1 mmp-coming-soon.zip | grep -E '(^|/)\.'; then
+            echo "::error::dotfiles found in the archive"
+            exit 1
+          fi
 
       - name: The plugin header and the runtime constant must agree
         run: |

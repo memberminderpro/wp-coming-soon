@@ -24,16 +24,20 @@ mkdir -p "${BUILD}/${SLUG}"
 # known ones, but a working tree also collects .claude and .remember, and a
 # denylist only ever excludes the tools somebody has already thought of. Those
 # two were, in fact, being copied into locally built archives.
+#
+# Everything else is anchored to the repo root with a leading slash. Unanchored,
+# rsync matches a name at any depth, so 'bin' would also drop a bin/ folder
+# inside the plugin's own code.
 rsync -a \
 	--exclude '.*' \
-	--exclude 'bin' \
-	--exclude 'docs' \
 	--exclude '*.zip' \
-	--exclude 'CLAUDE.md' \
-	--exclude 'CHANGELOG.md' \
-	--exclude 'CONTRIBUTING.md' \
-	--exclude 'version.txt' \
-	--exclude 'release-please-config*.json' \
+	--exclude '/bin' \
+	--exclude '/docs' \
+	--exclude '/CLAUDE.md' \
+	--exclude '/CHANGELOG.md' \
+	--exclude '/CONTRIBUTING.md' \
+	--exclude '/version.txt' \
+	--exclude '/release-please-config*.json' \
 	"${ROOT}/" "${BUILD}/${SLUG}/"
 
 ( cd "$BUILD" && zip -rq "${SLUG}.zip" "$SLUG" )
